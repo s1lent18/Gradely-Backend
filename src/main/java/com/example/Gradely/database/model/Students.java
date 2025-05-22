@@ -1,10 +1,25 @@
-package com.example.Gradely.database;
+package com.example.Gradely.database.model;
 
 import jakarta.persistence.*;
+
+import java.security.SecureRandom;
 
 @Entity
 @Table(name = "students")
 public class Students {
+
+    private static final int PASSWORD_LENGTH = 10;
+    private static final String CHAR_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#%&*!";
+
+    private static String generateRandomPassword() {
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(PASSWORD_LENGTH);
+        for (int i = 0; i < PASSWORD_LENGTH; i++) {
+            int index = random.nextInt(CHAR_SET.length());
+            sb.append(CHAR_SET.charAt(index));
+        }
+        return sb.toString();
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,8 +65,8 @@ public class Students {
     @Column(name = "dob")
     private String dob;
 
-    @Column(name = "cpga")
-    private Float cpga;
+    @Column(name = "cgpa")
+    private Double cpga;
 
     @Column(name = "chattempted")
     private Integer chAttempted;
@@ -64,7 +79,7 @@ public class Students {
 
     public Students() {}
 
-    public Students(String studentName, String fatherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String batch, String degree, String gender, String dob, String password) {
+    public Students(String studentName, String fatherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String batch, String degree, String gender, String dob) {
         this.studentName = studentName;
         this.fatherName = fatherName;
         this.bloodGroup = bloodGroup;
@@ -76,10 +91,12 @@ public class Students {
         this.batch = batch;
         this.degree = degree;
         this.gender = gender;
+        this.status = "Current";
         this.dob = dob;
-        this.cpga = 0.0f;
+        this.cpga = 0.0;
         this.chAttempted = 0;
         this.chCleared = 0;
+        this.password = generateRandomPassword();
     }
 
     public Long getStudentId() {
@@ -162,7 +179,7 @@ public class Students {
         this.phone = phone;
     }
 
-    public Float getCpga() {
+    public Double getCpga() {
         return cpga;
     }
 
@@ -210,7 +227,7 @@ public class Students {
         this.status = status;
     }
 
-    public void setCpga(Float cpga) {
+    public void setCpga(Double cpga) {
         this.cpga = cpga;
     }
 
