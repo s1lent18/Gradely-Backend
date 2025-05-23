@@ -23,6 +23,9 @@ public class Courses {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "credithour")
+    private Integer creditHour;
+
     @ManyToOne
     @JoinColumn(name = "prereqid")
     private Courses prereqCourse;
@@ -30,19 +33,21 @@ public class Courses {
     @ManyToMany(mappedBy = "courses")
     private Set<Teachers> teachers = new HashSet<>();
 
-    public Courses(Long courseId, String courseName, Departments department, String status, Courses prereqCourse) {
+    public Courses(Long courseId, String courseName, Departments department, String status, Courses prereqCourse, Integer creditHour) {
         this.courseId = courseId;
         this.courseName = courseName;
         this.department = department;
         this.status = status;
         this.prereqCourse = prereqCourse;
+        this.creditHour = creditHour;
     }
 
-    public Courses(Long courseId, String courseName, Departments department, String status) {
+    public Courses(Long courseId, String courseName, Departments department, String status, Integer creditHour) {
         this.courseId = courseId;
         this.courseName = courseName;
         this.department = department;
         this.status = status;
+        this.creditHour = creditHour;
     }
 
     public Courses() {}
@@ -95,5 +100,13 @@ public class Courses {
 
     public void setDepartment(Departments department) {
         this.department = department;
+    }
+
+    public Integer getCreditHour() {
+        return creditHour;
+    }
+
+    public void setCreditHour(Integer creditHour) {
+        this.creditHour = creditHour;
     }
 }
