@@ -9,9 +9,8 @@ import java.util.Set;
 public class Courses {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "courseid")
-    private Long courseId;
+    private String courseId;
 
     @Column(name = "coursename")
     private String courseName;
@@ -33,7 +32,7 @@ public class Courses {
     @ManyToMany(mappedBy = "courses")
     private Set<Teachers> teachers = new HashSet<>();
 
-    public Courses(Long courseId, String courseName, Departments department, String status, Courses prereqCourse, Integer creditHour) {
+    public Courses(String courseId, String courseName, Departments department, String status, Courses prereqCourse, Integer creditHour) {
         this.courseId = courseId;
         this.courseName = courseName;
         this.department = department;
@@ -42,7 +41,7 @@ public class Courses {
         this.creditHour = creditHour;
     }
 
-    public Courses(Long courseId, String courseName, Departments department, String status, Integer creditHour) {
+    public Courses(String courseId, String courseName, Departments department, String status, Integer creditHour) {
         this.courseId = courseId;
         this.courseName = courseName;
         this.department = department;
@@ -64,7 +63,7 @@ public class Courses {
         return prereqCourse;
     }
 
-    public Long getCourseId() {
+    public String getCourseId() {
         return courseId;
     }
 
@@ -73,7 +72,7 @@ public class Courses {
         return teachers;
     }
 
-    public void setCourseId(Long courseId) {
+    public void setCourseId(String courseId) {
         this.courseId = courseId;
     }
 
