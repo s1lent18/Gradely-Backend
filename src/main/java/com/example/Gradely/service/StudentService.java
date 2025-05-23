@@ -67,8 +67,6 @@ public class StudentService {
     public StudentResponse add(StudentRequest body) {
         Students student = new Students(body.studentName, body.fatherName, body.bloodGroup, body.address, "", body.personalEmail, body.phone, body.emergency, String.valueOf(java.time.LocalDate.now().getYear()), body.degree, body.gender, body.dob);
 
-        System.out.println(body);
-
         Students savedStudent = studentsRepository.save(student);
 
         String assignedEmail = body.studentName.replaceAll("\\s+", ".").toLowerCase() + "." + savedStudent.getStudentId() + "@uni.com";
