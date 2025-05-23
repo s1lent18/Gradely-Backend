@@ -1,5 +1,6 @@
 package com.example.Gradely.database.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +21,7 @@ public class Departments {
     private String headOfDepartment;
 
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private Set<Courses> courses = new HashSet<>();
 
     public void setDeptId(Long deptId) {

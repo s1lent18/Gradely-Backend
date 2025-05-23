@@ -1,5 +1,6 @@
 package com.example.Gradely.database.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -17,6 +18,7 @@ public class Courses {
 
     @ManyToOne
     @JoinColumn(name = "deptid", nullable = false)
+    @JsonBackReference
     private Departments department;
 
     @Column(name = "status")
