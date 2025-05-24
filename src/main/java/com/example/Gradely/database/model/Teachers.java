@@ -1,13 +1,27 @@
 package com.example.Gradely.database.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "teachers")
 public class Teachers {
+
+    private static final int PASSWORD_LENGTH = 10;
+    private static final String CHAR_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#%&*!";
+
+    private static String generateRandomPassword() {
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(PASSWORD_LENGTH);
+        for (int i = 0; i < PASSWORD_LENGTH; i++) {
+            int index = random.nextInt(CHAR_SET.length());
+            sb.append(CHAR_SET.charAt(index));
+        }
+        return sb.toString();
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +46,9 @@ public class Teachers {
     @Column(name = "phone")
     private String phone;
 
+    @Column(name = "gender")
+    private String gender;
+
     @Column(name = "emergency")
     private String emergency;
 
@@ -41,11 +58,19 @@ public class Teachers {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "password")
+    private String password;
+
+    @ManyToOne
+    @JoinColumn(name = "deptid", nullable = false)
+    @JsonBackReference
+    private Departments department;
+
     @ManyToMany
     @JoinTable(
-            name = "courseteacher",
-            joinColumns = @JoinColumn(name = "teacherid"),
-            inverseJoinColumns = @JoinColumn(name = "courseid")
+        name = "courseteacher",
+        joinColumns = @JoinColumn(name = "teacherid"),
+        inverseJoinColumns = @JoinColumn(name = "courseid")
     )
     private Set<Courses> courses = new HashSet<>();
 
@@ -137,8 +162,31 @@ public class Teachers {
         this.teacherName = teacherName;
     }
 
-    public Teachers(Long teacherId, String teacherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String qualification, String status, Set<Courses> courses) {
-        this.teacherId = teacherId;
+    public void setDepartment(Departments department) {
+        this.department = department;
+    }
+
+    public Departments getDepartment() {
+        return department;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public Teachers(String teacherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String qualification, String status, Set<Courses> courses, Departments department, String gender) {
         this.teacherName = teacherName;
         this.bloodGroup = bloodGroup;
         this.address = address;
@@ -149,10 +197,12 @@ public class Teachers {
         this.qualification = qualification;
         this.status = status;
         this.courses = courses;
+        this.department = department;
+        this.gender = gender;
+        this.password = generateRandomPassword();
     }
 
-    public Teachers(Long teacherId, String teacherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String qualification, String status) {
-        this.teacherId = teacherId;
+    public Teachers(String teacherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String qualification, String status, Departments department, String gender) {
         this.teacherName = teacherName;
         this.bloodGroup = bloodGroup;
         this.address = address;
@@ -162,5 +212,8 @@ public class Teachers {
         this.emergency = emergency;
         this.qualification = qualification;
         this.status = status;
+        this.department = department;
+        this.gender = gender;
+        this.password = generateRandomPassword();
     }
 }

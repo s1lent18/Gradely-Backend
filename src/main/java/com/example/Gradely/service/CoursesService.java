@@ -130,32 +130,31 @@ public class CoursesService {
     public List<CourseWithTeachersResponse> getAllCoursesWithTeachers() {
         return coursesRepository.findAll().stream().map(course -> {
             CourseWithTeachersResponse.DepartmentInfo dept = new CourseWithTeachersResponse.DepartmentInfo(
-                    course.getDepartment().getDeptId(),
-                    course.getDepartment().getDeptName()
+                course.getDepartment().getDeptId(),
+                course.getDepartment().getDeptName()
             );
 
             CourseWithTeachersResponse.PrerequisiteCourseInfo prereq = course.getPrereqCourse() != null
-                    ? new CourseWithTeachersResponse.PrerequisiteCourseInfo(
-                    course.getPrereqCourse().getCourseId(),
-                    course.getPrereqCourse().getCourseName()
-            )
-                    : null;
+                ? new CourseWithTeachersResponse.PrerequisiteCourseInfo(
+                course.getPrereqCourse().getCourseId(),
+                course.getPrereqCourse().getCourseName()
+            ) : null;
 
             List<CourseWithTeachersResponse.TeacherInfo> teachers = course.getTeachers().stream()
-                    .map(teacher -> new CourseWithTeachersResponse.TeacherInfo(
-                            teacher.getTeacherId(),
-                            teacher.getTeacherName(),
-                            teacher.getAssignedEmail()
-                    )).toList();
+                .map(teacher -> new CourseWithTeachersResponse.TeacherInfo(
+                        teacher.getTeacherId(),
+                        teacher.getTeacherName(),
+                        teacher.getAssignedEmail()
+                )).toList();
 
             return new CourseWithTeachersResponse(
-                    course.getCourseId(),
-                    course.getCourseName(),
-                    course.getStatus(),
-                    course.getCreditHour(),
-                    dept,
-                    prereq,
-                    teachers
+                course.getCourseId(),
+                course.getCourseName(),
+                course.getStatus(),
+                course.getCreditHour(),
+                dept,
+                prereq,
+                teachers
             );
         }).toList();
     }
@@ -172,18 +171,18 @@ public class CoursesService {
         }
 
         Courses course = prereq != null
-                ? new Courses(body.courseId, body.courseName, dept, body.status, prereq, body.creditHour)
-                : new Courses(body.courseId, body.courseName, dept, body.status, body.creditHour);
+            ? new Courses(body.courseId, body.courseName, dept, body.status, prereq, body.creditHour)
+            : new Courses(body.courseId, body.courseName, dept, body.status, body.creditHour);
 
         coursesRepository.save(course);
 
         return new CourseResponse(
-                course.getCourseId(),
-                course.getCourseName(),
-                course.getStatus(),
-                course.getCreditHour(),
-                new CourseResponse.DepartmentInfo(dept.getDeptId(), dept.getDeptName()),
-                prereq != null ? new CourseResponse.PrerequisiteCourseInfo(prereq.getCourseId(), prereq.getCourseName()) : null
+            course.getCourseId(),
+            course.getCourseName(),
+            course.getStatus(),
+            course.getCreditHour(),
+            new CourseResponse.DepartmentInfo(dept.getDeptId(), dept.getDeptName()),
+            prereq != null ? new CourseResponse.PrerequisiteCourseInfo(prereq.getCourseId(), prereq.getCourseName()) : null
         );
     }
 }
