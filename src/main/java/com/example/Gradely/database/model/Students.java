@@ -77,9 +77,12 @@ public class Students {
     @Column(name = "password")
     private String password;
 
+    @Column(name = "section")
+    private String section;
+
     public Students() {}
 
-    public Students(String studentName, String fatherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String batch, String degree, String gender, String dob) {
+    public Students(String studentName, String fatherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String batch, String degree, String gender, String dob, String section) {
         this.studentName = studentName;
         this.fatherName = fatherName;
         this.bloodGroup = bloodGroup;
@@ -97,6 +100,23 @@ public class Students {
         this.chAttempted = 0;
         this.chCleared = 0;
         this.password = generateRandomPassword();
+        this.section = section;
+    }
+
+    public static int getPasswordLength() {
+        return PASSWORD_LENGTH;
+    }
+
+    public String getSection() {
+        return section;
+    }
+
+    public static String getCharSet() {
+        return CHAR_SET;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
     }
 
     public Long getStudentId() {

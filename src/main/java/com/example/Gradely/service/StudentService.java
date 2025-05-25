@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 public class StudentService {
@@ -44,8 +47,9 @@ public class StudentService {
         public String dob;
         public String password;
         public String assignedEmail;
+        public String section;
 
-        public StudentResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String degree, String gender, String dob, String password, String assignedEmail, String batch) {
+        public StudentResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String degree, String gender, String dob, String password, String assignedEmail, String batch, String section) {
             this.studentId = studentId;
             this.studentName = studentName;
             this.fatherName = fatherName;
@@ -60,12 +64,17 @@ public class StudentService {
             this.dob = dob;
             this.password = password;
             this.assignedEmail = assignedEmail;
+            this.section = section;
         }
     }
 
     @Transactional
     public StudentResponse add(StudentRequest body) {
-        Students student = new Students(body.studentName, body.fatherName, body.bloodGroup, body.address, "", body.personalEmail, body.phone, body.emergency, String.valueOf(java.time.LocalDate.now().getYear()), body.degree, body.gender, body.dob);
+        String batch = String.valueOf(LocalDate.now().getYear());
+
+        String section = assignSection(body.degree, batch);
+
+        Students student = new Students(body.studentName, body.fatherName, body.bloodGroup, body.address, "", body.personalEmail, body.phone, body.emergency, batch, body.degree, body.gender, body.dob, section);
 
         Students savedStudent = studentsRepository.save(student);
 
@@ -76,20 +85,40 @@ public class StudentService {
         studentsRepository.save(savedStudent);
 
         return new StudentResponse(
-                String.valueOf(savedStudent.getStudentId()),
-                savedStudent.getStudentName(),
-                savedStudent.getFatherName(),
-                savedStudent.getBloodGroup(),
-                savedStudent.getAddress(),
-                savedStudent.getPersonalEmail(),
-                savedStudent.getPhone(),
-                savedStudent.getEmergency(),
-                savedStudent.getDegree(),
-                savedStudent.getGender(),
-                savedStudent.getDob(),
-                savedStudent.getPassword(),
-                savedStudent.getAssignedEmail(),
-                savedStudent.getBatch()
+            String.valueOf(savedStudent.getStudentId()),
+            savedStudent.getStudentName(),
+            savedStudent.getFatherName(),
+            savedStudent.getBloodGroup(),
+            savedStudent.getAddress(),
+            savedStudent.getPersonalEmail(),
+            savedStudent.getPhone(),
+            savedStudent.getEmergency(),
+            savedStudent.getDegree(),
+            savedStudent.getGender(),
+            savedStudent.getDob(),
+            savedStudent.getPassword(),
+            savedStudent.getAssignedEmail(),
+            savedStudent.getBatch(),
+            savedStudent.getSection()
         );
+    }
+
+    private String assignSection(String degree, String batch) {
+        List<Character> sectionSuffixes = new ArrayList<>();
+        for (char c = 'A'; c <= 'J'; c++) {
+            sectionSuffixes.add(c);
+        }
+
+        Collections.shuffle(sectionSuffixes);
+
+        for (char suffix : sectionSuffixes) {
+            String section = degree + "-1" + suffix;
+            long count = studentsRepository.countByDegreeAndBatchAndSection(degree, batch, section);
+            if (count < 50) {
+                return section;
+            }
+        }
+
+        throw new RuntimeException("All sections for degree " + degree + " in batch " + batch + " are full.");
     }
 }
