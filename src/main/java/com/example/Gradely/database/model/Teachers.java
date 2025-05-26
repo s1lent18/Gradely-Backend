@@ -186,6 +186,8 @@ public class Teachers {
         return password;
     }
 
+    public Teachers () {};
+
     public Teachers(String teacherName, String bloodGroup, String address, String assignedEmail, String personalEmail, String phone, String emergency, String qualification, String status, Set<Courses> courses, Departments department, String gender) {
         this.teacherName = teacherName;
         this.bloodGroup = bloodGroup;

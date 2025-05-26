@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TeachersService {
@@ -107,7 +108,7 @@ public class TeachersService {
     }
 
     @Transactional
-    public void assignCoursesToTeacher(Long teacherId, List<String> courseIds) {
+    public List<String> assignCoursesToTeacher(Long teacherId, List<String> courseIds) {
         Teachers teacher = teachersRepository.findById(teacherId)
             .orElseThrow(() -> new RuntimeException("Teacher not found"));
 
@@ -124,5 +125,23 @@ public class TeachersService {
         }
 
         teachersRepository.save(teacher);
+
+        return teacher.getCourses().stream()
+            .map(Courses::getCourseId)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void removeAllCoursesFromAllTeachers() {
+        List<Teachers> allTeachers = teachersRepository.findAll();
+
+        for (Teachers teacher : allTeachers) {
+            for (Courses course : teacher.getCourses()) {
+                course.getTeachers().remove(teacher);
+            }
+            teacher.getCourses().clear();
+        }
+
+        teachersRepository.saveAll(allTeachers);
     }
 }

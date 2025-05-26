@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/teacher")
@@ -29,11 +31,21 @@ public class TeachersController {
     }
 
     @PostMapping("/{teacherId}/assign-courses")
-    public ResponseEntity<String> assignCourses(
-            @PathVariable Long teacherId,
-            @RequestBody CourseAssignmentRequest request
+    public ResponseEntity<List<String>> assignCourses(
+        @PathVariable Long teacherId,
+        @RequestBody CourseAssignmentRequest request
     ) {
-        teachersService.assignCoursesToTeacher(teacherId, request.courseIds);
-        return ResponseEntity.ok("Courses assigned successfully");
+        List<String> assignedCourses = teachersService.assignCoursesToTeacher(teacherId, request.courseIds);
+        return ResponseEntity.ok(assignedCourses);
+    }
+
+    @DeleteMapping("/remove-courses-from-all")
+    public ResponseEntity<Map<String, String>> removeCoursesFromAllTeachers() {
+        teachersService.removeAllCoursesFromAllTeachers();
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "All courses have been removed from all teachers.");
+
+        return ResponseEntity.ok(response);
     }
 }
