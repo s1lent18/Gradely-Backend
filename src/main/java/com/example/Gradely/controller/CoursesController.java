@@ -13,6 +13,10 @@ public class CoursesController {
 
     private final CoursesService coursesService;
 
+    public static class TeacherAssignmentRequest {
+        public List<Long> teacherIds;
+    }
+
     @Autowired
     public CoursesController(CoursesService coursesService) {
         this.coursesService = coursesService;
@@ -22,6 +26,15 @@ public class CoursesController {
     public ResponseEntity<CoursesService.CourseResponse> addCourse(@RequestBody CoursesService.CourseRequest request) {
         CoursesService.CourseResponse response = coursesService.add(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{courseId}/assign-teachers")
+    public ResponseEntity<String> assignTeachersToCourse(
+            @PathVariable String courseId,
+            @RequestBody TeacherAssignmentRequest request
+    ) {
+        coursesService.assignTeachersToCourse(courseId, request.teacherIds);
+        return ResponseEntity.ok("Teachers assigned to course successfully");
     }
 
     @GetMapping("/getWithTeachers")

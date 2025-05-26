@@ -3,21 +3,25 @@ package com.example.Gradely.service;
 import com.example.Gradely.database.model.Courses;
 import com.example.Gradely.database.model.Departments;
 import com.example.Gradely.database.model.Teachers;
-import com.example.Gradely.database.model.Teachers;
+import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.DepartmentsRepository;
 import com.example.Gradely.database.repository.TeachersRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class TeachersService {
 
     private final TeachersRepository teachersRepository;
     private final DepartmentsRepository departmentsRepository;
+    private final CoursesRepository coursesRepository;
 
-    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository) {
+    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository, CoursesRepository coursesRepository) {
         this.teachersRepository = teachersRepository;
         this.departmentsRepository = departmentsRepository;
+        this.coursesRepository = coursesRepository;
     }
 
     public static class TeacherRequest {
@@ -100,5 +104,25 @@ public class TeachersService {
             savedTeacher.getAssignedEmail(),
             new TeachersResponse.DepartmentInfo(dept.getDeptId(), dept.getDeptName())
         );
+    }
+
+    @Transactional
+    public void assignCoursesToTeacher(Long teacherId, List<String> courseIds) {
+        Teachers teacher = teachersRepository.findById(teacherId)
+            .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        List<Courses> courses = coursesRepository.findAllById(courseIds);
+
+        if (courses.size() != courseIds.size()) {
+            throw new RuntimeException("One or more courses not found");
+        }
+
+        teacher.getCourses().addAll(courses);
+
+        for (Courses course : courses) {
+            course.getTeachers().add(teacher);
+        }
+
+        teachersRepository.save(teacher);
     }
 }

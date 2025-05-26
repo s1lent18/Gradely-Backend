@@ -2,8 +2,10 @@ package com.example.Gradely.service;
 
 import com.example.Gradely.database.model.Courses;
 import com.example.Gradely.database.model.Departments;
+import com.example.Gradely.database.model.Teachers;
 import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.DepartmentsRepository;
+import com.example.Gradely.database.repository.TeachersRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,11 +15,13 @@ import java.util.List;
 public class CoursesService {
 
     private final CoursesRepository coursesRepository;
+    private final TeachersRepository teachersRepository;
     private final DepartmentsRepository departmentsRepository;
 
-    public CoursesService(CoursesRepository coursesRepository, DepartmentsRepository departmentsRepository) {
+    public CoursesService(CoursesRepository coursesRepository, DepartmentsRepository departmentsRepository, TeachersRepository teachersRepository) {
         this.coursesRepository = coursesRepository;
         this.departmentsRepository = departmentsRepository;
+        this.teachersRepository = teachersRepository;
     }
 
     public static class CourseWithTeachersResponse {
@@ -185,5 +189,24 @@ public class CoursesService {
             prereq != null ? new CourseResponse.PrerequisiteCourseInfo(prereq.getCourseId(), prereq.getCourseName()) : null
         );
     }
-}
 
+    @Transactional
+    public void assignTeachersToCourse(String courseId, List<Long> teacherIds) {
+        Courses course = coursesRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        List<Teachers> teachers = teachersRepository.findAllById(teacherIds);
+
+        if (teachers.size() != teacherIds.size()) {
+            throw new RuntimeException("One or more teachers not found");
+        }
+
+        course.getTeachers().addAll(teachers);
+
+        for (Teachers teacher : teachers) {
+            teacher.getCourses().add(course);
+        }
+
+        coursesRepository.save(course);
+    }
+}
