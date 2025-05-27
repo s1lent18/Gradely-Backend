@@ -27,6 +27,7 @@ public class StudentLabs {
     @Column(name = "total")
     private String total = "N/A";
 
+    public StudentLabs() {}
 
     public void setTotal(String total) {
         this.total = total;

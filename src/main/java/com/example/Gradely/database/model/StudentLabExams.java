@@ -30,6 +30,8 @@ public class StudentLabExams {
     @Column(name = "finaltotal")
     private String finalTotal = "N/A";
 
+    public StudentLabExams() {}
+
     public void setId(Long id) {
         this.id = id;
     }

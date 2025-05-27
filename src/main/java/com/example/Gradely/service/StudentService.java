@@ -2,6 +2,8 @@ package com.example.Gradely.service;
 
 import com.example.Gradely.database.model.Students;
 import com.example.Gradely.database.repository.StudentsRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,19 @@ public class StudentService {
         public String degree;
         public String gender;
         public String dob;
+    }
+
+    public static class StudentLoginRequest {
+        public String email;
+        public String password;
+
+        public String getPassword() {
+            return password;
+        }
+
+        public String getEmail() {
+            return email;
+        }
     }
 
     public static class StudentResponse {
@@ -68,6 +83,9 @@ public class StudentService {
         }
     }
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Transactional
     public StudentResponse add(StudentRequest body) {
         String batch = String.valueOf(LocalDate.now().getYear());
@@ -81,6 +99,10 @@ public class StudentService {
         String assignedEmail = body.studentName.replaceAll("\\s+", ".").toLowerCase() + "." + savedStudent.getStudentId() + "@uni.com";
 
         savedStudent.setAssignedEmail(assignedEmail);
+
+        String rawPassword = savedStudent.getPassword();
+
+        savedStudent.setPassword(passwordEncoder.encode(savedStudent.getPassword()));
 
         studentsRepository.save(savedStudent);
 
@@ -96,7 +118,7 @@ public class StudentService {
             savedStudent.getDegree(),
             savedStudent.getGender(),
             savedStudent.getDob(),
-            savedStudent.getPassword(),
+            rawPassword,
             savedStudent.getAssignedEmail(),
             savedStudent.getBatch(),
             savedStudent.getSection()

@@ -18,7 +18,6 @@ public class StudentAssignments {
     @JoinColumn(name = "courseid", referencedColumnName = "courseid", nullable = false)
     private Courses course;
 
-
     @Column(name = "assignmentno", nullable = false)
     private int assignmentNo;
 
@@ -27,6 +26,8 @@ public class StudentAssignments {
 
     @Column(name = "total")
     private String total = "N/A";
+
+    public StudentAssignments() {}
 
     public Long getId() {
         return id;
