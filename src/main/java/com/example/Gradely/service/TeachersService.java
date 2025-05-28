@@ -6,6 +6,7 @@ import com.example.Gradely.database.model.Teachers;
 import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.DepartmentsRepository;
 import com.example.Gradely.database.repository.TeachersRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +19,13 @@ public class TeachersService {
     private final TeachersRepository teachersRepository;
     private final DepartmentsRepository departmentsRepository;
     private final CoursesRepository coursesRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository, CoursesRepository coursesRepository) {
+    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository, CoursesRepository coursesRepository, PasswordEncoder passwordEncoder) {
         this.teachersRepository = teachersRepository;
         this.departmentsRepository = departmentsRepository;
         this.coursesRepository = coursesRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public static class TeacherRequest {
@@ -35,6 +38,19 @@ public class TeachersService {
         public String gender;
         public String qualification;
         public Long departmentId;
+    }
+
+    public static class TeacherLoginRequest {
+        public String email;
+        public String password;
+
+        public String getPassword() {
+            return password;
+        }
+
+        public String getEmail() {
+            return email;
+        }
     }
 
     public static class TeachersResponse {
@@ -89,6 +105,10 @@ public class TeachersService {
 
         savedTeacher.setAssignedEmail(assignedEmail);
 
+        String rawPassword = savedTeacher.getPassword();
+
+        savedTeacher.setPassword(passwordEncoder.encode(savedTeacher.getPassword()));
+
         teachersRepository.save(savedTeacher);
 
         return new TeachersService.TeachersResponse(
@@ -101,7 +121,7 @@ public class TeachersService {
             savedTeacher.getEmergency(),
             savedTeacher.getQualification(),
             savedTeacher.getGender(),
-            savedTeacher.getPassword(),
+            rawPassword,
             savedTeacher.getAssignedEmail(),
             new TeachersResponse.DepartmentInfo(dept.getDeptId(), dept.getDeptName())
         );
