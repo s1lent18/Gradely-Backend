@@ -13,25 +13,14 @@ public class Sections {
     @Column(name = "sectionname", nullable = false)
     private String sectionName;
 
-    @ManyToOne
-    @JoinColumn(name = "courseid", nullable = false)
-    private Courses course;
-
-    @ManyToOne
-    @JoinColumn(name = "teacherid", nullable = false)
-    private Teachers teacher;
-
     @Column(name = "semester", nullable = false)
     private String semester;
 
     public Sections() {}
 
-    public Courses getCourse() {
-        return course;
-    }
-
-    public void setCourse(Courses course) {
-        this.course = course;
+    public Sections(String sectionName, String semester) {
+        this.sectionName = sectionName;
+        this.semester = semester;
     }
 
     public void setId(Long id) {
@@ -50,19 +39,11 @@ public class Sections {
         return semester;
     }
 
-    public Teachers getTeacher() {
-        return teacher;
-    }
-
     public void setSectionName(String sectionName) {
         this.sectionName = sectionName;
     }
 
     public void setSemester(String semester) {
         this.semester = semester;
-    }
-
-    public void setTeacher(Teachers teacher) {
-        this.teacher = teacher;
     }
 }

@@ -1,6 +1,8 @@
 package com.example.Gradely.service;
 
+import com.example.Gradely.database.model.Sections;
 import com.example.Gradely.database.model.Students;
+import com.example.Gradely.database.repository.SectionsRepository;
 import com.example.Gradely.database.repository.StudentsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,10 +17,12 @@ import java.util.List;
 @Service
 public class StudentService {
 
+    private final SectionsRepository sectionsRepository;
     private final StudentsRepository studentsRepository;
 
-    public StudentService(StudentsRepository studentsRepository) {
+    public StudentService(StudentsRepository studentsRepository, SectionsRepository sectionsRepository) {
         this.studentsRepository = studentsRepository;
+        this.sectionsRepository = sectionsRepository;
     }
 
     public static class StudentRequest {
@@ -91,6 +95,17 @@ public class StudentService {
         String batch = String.valueOf(LocalDate.now().getYear());
 
         String section = assignSection(body.degree, batch);
+
+        boolean flag = sectionsRepository.existsBySectionName(section);
+
+        if (!flag) {
+
+            String semester = (Integer.parseInt(String.valueOf(section.charAt(7))) % 2 != 0) ? "Fall" : "Spring";
+
+            Sections sections = new Sections(section, semester);
+
+            sectionsRepository.save(sections);
+        }
 
         Students student = new Students(body.studentName, body.fatherName, body.bloodGroup, body.address, "", body.personalEmail, body.phone, body.emergency, batch, body.degree, body.gender, body.dob, section);
 
