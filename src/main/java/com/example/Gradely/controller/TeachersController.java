@@ -63,10 +63,9 @@ public class TeachersController {
         }
     }
 
-
     @PostMapping("/{teacherId}/assign-courses")
     public ResponseEntity<List<String>> assignCourses(
-        @PathVariable Long teacherId,
+        @PathVariable String teacherId,
         @RequestBody CourseAssignmentRequest request
     ) {
         List<String> assignedCourses = teachersService.assignCoursesToTeacher(teacherId, request.courseIds);

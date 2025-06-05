@@ -1,28 +1,19 @@
 package com.example.Gradely.service;
 
-import com.example.Gradely.database.model.Sections;
-import com.example.Gradely.database.model.Students;
-import com.example.Gradely.database.repository.SectionsRepository;
+import com.example.Gradely.database.model.Student;
 import com.example.Gradely.database.repository.StudentsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 @Service
 public class StudentService {
 
-    private final SectionsRepository sectionsRepository;
     private final StudentsRepository studentsRepository;
 
-    public StudentService(StudentsRepository studentsRepository, SectionsRepository sectionsRepository) {
+    public StudentService(StudentsRepository studentsRepository) {
         this.studentsRepository = studentsRepository;
-        this.sectionsRepository = sectionsRepository;
     }
 
     public static class StudentRequest {
@@ -66,9 +57,9 @@ public class StudentService {
         public String dob;
         public String password;
         public String assignedEmail;
-        public String section;
+        public Integer semester;
 
-        public StudentResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String degree, String gender, String dob, String password, String assignedEmail, String batch, String section) {
+        public StudentResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String degree, String gender, String dob, String password, String assignedEmail, String batch, Integer semester) {
             this.studentId = studentId;
             this.studentName = studentName;
             this.fatherName = fatherName;
@@ -83,7 +74,7 @@ public class StudentService {
             this.dob = dob;
             this.password = password;
             this.assignedEmail = assignedEmail;
-            this.section = section;
+            this.semester = semester;
         }
     }
 
@@ -92,26 +83,12 @@ public class StudentService {
 
     @Transactional
     public StudentResponse add(StudentRequest body) {
-        String batch = String.valueOf(LocalDate.now().getYear());
 
-        String section = assignSection(body.degree, batch);
+        Student student = new Student(body.studentName, body.fatherName, body.personalEmail, body.bloodGroup, body.address, body.phone, body.emergency, body.degree, body.gender, body.dob);
 
-        boolean flag = sectionsRepository.existsBySectionName(section);
+        Student savedStudent = studentsRepository.save(student);
 
-        if (!flag) {
-
-            String semester = (Integer.parseInt(String.valueOf(section.charAt(7))) % 2 != 0) ? "Fall" : "Spring";
-
-            Sections sections = new Sections(section, semester);
-
-            sectionsRepository.save(sections);
-        }
-
-        Students student = new Students(body.studentName, body.fatherName, body.bloodGroup, body.address, "", body.personalEmail, body.phone, body.emergency, batch, body.degree, body.gender, body.dob, section);
-
-        Students savedStudent = studentsRepository.save(student);
-
-        String assignedEmail = body.studentName.replaceAll("\\s+", ".").toLowerCase() + "." + savedStudent.getStudentId() + "@uni.com";
+        String assignedEmail = body.studentName.replaceAll("\\s+", ".").toLowerCase() + "." + "@uni.com";
 
         savedStudent.setAssignedEmail(assignedEmail);
 
@@ -122,8 +99,8 @@ public class StudentService {
         studentsRepository.save(savedStudent);
 
         return new StudentResponse(
-            String.valueOf(savedStudent.getStudentId()),
-            savedStudent.getStudentName(),
+            String.valueOf(savedStudent.getId()),
+            savedStudent.getName(),
             savedStudent.getFatherName(),
             savedStudent.getBloodGroup(),
             savedStudent.getAddress(),
@@ -136,26 +113,26 @@ public class StudentService {
             rawPassword,
             savedStudent.getAssignedEmail(),
             savedStudent.getBatch(),
-            savedStudent.getSection()
+            1
         );
     }
 
-    private String assignSection(String degree, String batch) {
-        List<Character> sectionSuffixes = new ArrayList<>();
-        for (char c = 'A'; c <= 'J'; c++) {
-            sectionSuffixes.add(c);
-        }
-
-        Collections.shuffle(sectionSuffixes);
-
-        for (char suffix : sectionSuffixes) {
-            String section = degree + "-1" + suffix;
-            long count = studentsRepository.countByDegreeAndBatchAndSection(degree, batch, section);
-            if (count < 50) {
-                return section;
-            }
-        }
-
-        throw new RuntimeException("All sections for degree " + degree + " in batch " + batch + " are full.");
-    }
+//    private String assignSection(String degree, String batch) {
+//        List<Character> sectionSuffixes = new ArrayList<>();
+//        for (char c = 'A'; c <= 'J'; c++) {
+//            sectionSuffixes.add(c);
+//        }
+//
+//        Collections.shuffle(sectionSuffixes);
+//
+//        for (char suffix : sectionSuffixes) {
+//            String section = degree + "-1" + suffix;
+//            long count = studentsRepository.countByDegreeAndBatchAndSection(degree, batch, section);
+//            if (count < 50) {
+//                return section;
+//            }
+//        }
+//
+//        throw new RuntimeException("All sections for degree " + degree + " in batch " + batch + " are full.");
+//    }
 }

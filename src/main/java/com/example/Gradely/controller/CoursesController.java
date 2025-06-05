@@ -14,7 +14,8 @@ public class CoursesController {
     private final CoursesService coursesService;
 
     public static class TeacherAssignmentRequest {
-        public List<Long> teacherIds;
+        public List<String> teacherIds;
+        public List<String> sections;
     }
 
     @Autowired
@@ -33,7 +34,7 @@ public class CoursesController {
             @PathVariable String courseId,
             @RequestBody TeacherAssignmentRequest request
     ) {
-        coursesService.assignTeachersToCourse(courseId, request.teacherIds);
+        coursesService.assignTeachersToCourse(courseId, request.teacherIds, request.sections);
         return ResponseEntity.ok("Teachers assigned to course successfully");
     }
 

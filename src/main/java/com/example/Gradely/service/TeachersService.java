@@ -1,8 +1,8 @@
 package com.example.Gradely.service;
 
-import com.example.Gradely.database.model.Courses;
-import com.example.Gradely.database.model.Departments;
-import com.example.Gradely.database.model.Teachers;
+import com.example.Gradely.database.model.Course;
+import com.example.Gradely.database.model.Department;
+import com.example.Gradely.database.model.Teacher;
 import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.DepartmentsRepository;
 import com.example.Gradely.database.repository.TeachersRepository;
@@ -10,7 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,9 +37,11 @@ public class TeachersService {
         public String personalEmail;
         public String phone;
         public String emergency;
+        public String position;
         public String gender;
-        public String qualification;
-        public Long departmentId;
+        public List<String> qualification;
+        public Integer age;
+        public String departmentId;
     }
 
     public static class TeacherLoginRequest {
@@ -61,13 +65,16 @@ public class TeachersService {
         public String personalEmail;
         public String phone;
         public String emergency;
-        public String qualification;
+        public String position;
+        public List<String> qualification;
         public String gender;
         public String password;
         public String assignedEmail;
-        public TeachersService.TeachersResponse.DepartmentInfo department;
+        public DepartmentInfo department;
 
-        public TeachersResponse(String teacherId, String teacherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String qualification, String gender, String password, String assignedEmail, TeachersService.TeachersResponse.DepartmentInfo department) {
+        public TeachersResponse(String teacherId, String teacherName, String bloodGroup, String address,
+                                String personalEmail, String phone, String emergency, String position, List<String> qualification,
+                                String gender, String password, String assignedEmail, DepartmentInfo department) {
             this.teacherId = teacherId;
             this.teacherName = teacherName;
             this.bloodGroup = bloodGroup;
@@ -75,6 +82,7 @@ public class TeachersService {
             this.personalEmail = personalEmail;
             this.phone = phone;
             this.emergency = emergency;
+            this.position = position;
             this.qualification = qualification;
             this.gender = gender;
             this.password = password;
@@ -83,10 +91,10 @@ public class TeachersService {
         }
 
         public static class DepartmentInfo {
-            public Long deptId;
+            public String deptId;
             public String deptName;
 
-            public DepartmentInfo(Long deptId, String deptName) {
+            public DepartmentInfo(String deptId, String deptName) {
                 this.deptId = deptId;
                 this.deptName = deptName;
             }
@@ -95,13 +103,26 @@ public class TeachersService {
 
     @Transactional
     public TeachersService.TeachersResponse add(TeachersService.TeacherRequest body) {
-        Departments dept = departmentsRepository.findById(body.departmentId).orElseThrow(() -> new RuntimeException("Department not found"));
+        Department dept = departmentsRepository.findById(body.departmentId).orElseThrow(() -> new RuntimeException("Department not found"));
 
-        Teachers teacher = new Teachers(body.teacherName, body.bloodGroup, body.address, "", body.personalEmail, body.phone, body.emergency, body.qualification, "Probation", dept, body.gender);
+        Teacher teacher = new Teacher(
+                body.teacherName,
+                body.personalEmail,
+                body.bloodGroup,
+                body.address,
+                body.phone,
+                body.emergency,
+                body.position,
+                body.qualification,
+                body.gender,
+                body.age
+        );
 
-        Teachers savedTeacher = teachersRepository.save(teacher);
+        teacher.setDepartmentId(Integer.parseInt(body.departmentId));
 
-        String assignedEmail = body.teacherName.replaceAll("\\s+", ".").toLowerCase() + "." + savedTeacher.getTeacherId() + "@unifaculty.com";
+        Teacher savedTeacher = teachersRepository.save(teacher);
+
+        String assignedEmail = body.teacherName.replaceAll("\\s+", ".").toLowerCase() + "." + "@unifaculty.com";
 
         savedTeacher.setAssignedEmail(assignedEmail);
 
@@ -111,57 +132,96 @@ public class TeachersService {
 
         teachersRepository.save(savedTeacher);
 
-        return new TeachersService.TeachersResponse(
-            String.valueOf(savedTeacher.getTeacherId()),
-            savedTeacher.getTeacherName(),
-            savedTeacher.getBloodGroup(),
-            savedTeacher.getAddress(),
-            savedTeacher.getPersonalEmail(),
-            savedTeacher.getPhone(),
-            savedTeacher.getEmergency(),
-            savedTeacher.getQualification(),
-            savedTeacher.getGender(),
-            rawPassword,
-            savedTeacher.getAssignedEmail(),
-            new TeachersResponse.DepartmentInfo(dept.getDeptId(), dept.getDeptName())
+        return new TeachersResponse(
+                savedTeacher.getId(),
+                savedTeacher.getName(),
+                savedTeacher.getBloodGroup(),
+                savedTeacher.getAddress(),
+                savedTeacher.getPersonalEmail(),
+                savedTeacher.getPhone(),
+                savedTeacher.getEmergency(),
+                savedTeacher.getPosition(),
+                savedTeacher.getQualification(),
+                savedTeacher.getGender(),
+                rawPassword,
+                savedTeacher.getAssignedEmail(),
+                new TeachersResponse.DepartmentInfo(dept.getId(), dept.getDepartmentName())
         );
     }
 
     @Transactional
-    public List<String> assignCoursesToTeacher(Long teacherId, List<String> courseIds) {
-        Teachers teacher = teachersRepository.findById(teacherId)
-            .orElseThrow(() -> new RuntimeException("Teacher not found"));
+    public List<String> assignCoursesToTeacher(String teacherId, List<String> courseIds) {
+        Teacher teacher = teachersRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
 
-        List<Courses> courses = coursesRepository.findAllById(courseIds);
+        List<Course> courses = coursesRepository.findAllById(courseIds);
 
         if (courses.size() != courseIds.size()) {
             throw new RuntimeException("One or more courses not found");
         }
 
-        teacher.getCourses().addAll(courses);
+        List<Teacher.CourseInfo> courseInfos = courses.stream().map(course -> {
+            Teacher.CourseInfo info = new Teacher.CourseInfo();
+            info.setId(course.getId());
+            info.setRating(0);
+            info.setBestRatedComment("");
+            info.setWorstRatedComment("");
+            return info;
+        }).toList();
 
-        for (Courses course : courses) {
-            course.getTeachers().add(teacher);
+        if (teacher.getCourses() == null) {
+            teacher.setCourses(new ArrayList<>());
+        }
+        teacher.getCourses().addAll(courseInfos);
+
+        for (Course course : courses) {
+            if (course.getTeachers() == null) {
+                course.setTeachers(new ArrayList<>());
+            }
+
+            Course.TeacherInfo teacherInfo = new Course.TeacherInfo();
+            teacherInfo.setId(teacher.getId());
+            teacherInfo.setName(teacher.getName());
+            teacherInfo.setSections(new ArrayList<>());
+
+            course.getTeachers().add(teacherInfo);
         }
 
         teachersRepository.save(teacher);
+        coursesRepository.saveAll(courses);
 
         return teacher.getCourses().stream()
-            .map(Courses::getCourseId)
-            .collect(Collectors.toList());
+                .map(c -> String.valueOf(c.getId()))
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public void removeAllCoursesFromAllTeachers() {
-        List<Teachers> allTeachers = teachersRepository.findAll();
+        List<Teacher> allTeachers = teachersRepository.findAll();
 
-        for (Teachers teacher : allTeachers) {
-            for (Courses course : teacher.getCourses()) {
-                course.getTeachers().remove(teacher);
+        for (Teacher teacher : allTeachers) {
+            List<Teacher.CourseInfo> teacherCourses = teacher.getCourses();
+            if (teacherCourses != null && !teacherCourses.isEmpty()) {
+                List<String> courseIds = teacherCourses.stream()
+                        .map(courseInfo -> String.valueOf(courseInfo.getId()))
+                        .collect(Collectors.toList());
+
+                List<Course> courses = coursesRepository.findAllById(courseIds);
+
+                for (Course course : courses) {
+                    List<Course.TeacherInfo> teacherInfos = course.getTeachers();
+                    if (teacherInfos != null) {
+                        teacherInfos.removeIf(ti -> Objects.equals(ti.getId(), teacher.getId()));
+                    }
+                }
+
+                coursesRepository.saveAll(courses);
             }
-            teacher.getCourses().clear();
+
+            teacher.setCourses(new ArrayList<>());
         }
 
         teachersRepository.saveAll(allTeachers);
     }
+
 }

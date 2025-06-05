@@ -1,16 +1,15 @@
 package com.example.Gradely.database.repository;
 
-import com.example.Gradely.database.model.Courses;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.Gradely.database.model.Course;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface CoursesRepository extends JpaRepository<Courses, String> {
+public interface CoursesRepository extends MongoRepository<Course, String> {
 
-    @SuppressWarnings("null")
-    @EntityGraph(attributePaths = "teachers")
-    List<Courses> findAll();
+    Optional<Course> findByCourseCode(String courseCode);
+
+    //List<Course> findAll();
 }
