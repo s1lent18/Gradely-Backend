@@ -40,7 +40,7 @@ public class Teacher {
     private List<String> qualification;
     private String status;
     private String gender;
-    private int departmentId;
+    private String departmentId;
     private int age;
     private String password;
     private List<CourseInfo> courses;
@@ -240,7 +240,7 @@ public class Teacher {
         return qualification;
     }
 
-    public int getDepartmentId() {
+    public String getDepartmentId() {
         return departmentId;
     }
 
@@ -252,7 +252,7 @@ public class Teacher {
         this.age = age;
     }
 
-    public void setDepartmentId(int departmentId) {
+    public void setDepartmentId(String departmentId) {
         this.departmentId = departmentId;
     }
 }

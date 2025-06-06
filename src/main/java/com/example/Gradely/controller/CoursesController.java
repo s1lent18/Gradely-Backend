@@ -3,6 +3,7 @@ package com.example.Gradely.controller;
 import com.example.Gradely.service.CoursesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class CoursesController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<CoursesService.CourseResponse> addCourse(@RequestBody CoursesService.CourseRequest request) {
         CoursesService.CourseResponse response = coursesService.add(request);
         return ResponseEntity.ok(response);

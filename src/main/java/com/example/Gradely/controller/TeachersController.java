@@ -5,6 +5,7 @@ import com.example.Gradely.service.TeachersService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,6 +38,7 @@ public class TeachersController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<TeachersService.TeachersResponse> addTeacher(@RequestBody TeachersService.TeacherRequest request) {
         TeachersService.TeachersResponse response = teachersService.add(request);
         return ResponseEntity.ok(response);
@@ -64,6 +66,7 @@ public class TeachersController {
     }
 
     @PostMapping("/{teacherId}/assign-courses")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<String>> assignCourses(
         @PathVariable String teacherId,
         @RequestBody CourseAssignmentRequest request

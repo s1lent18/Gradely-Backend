@@ -112,19 +112,27 @@ public class TeachersService {
                 body.address,
                 body.phone,
                 body.emergency,
-                body.position,
+                "",
                 body.qualification,
                 body.gender,
                 body.age
         );
 
-        teacher.setDepartmentId(Integer.parseInt(body.departmentId));
+        teacher.setDepartmentId(body.departmentId);
 
         Teacher savedTeacher = teachersRepository.save(teacher);
 
         String assignedEmail = body.teacherName.replaceAll("\\s+", ".").toLowerCase() + "." + "@unifaculty.com";
 
         savedTeacher.setAssignedEmail(assignedEmail);
+
+        String qualification = body.qualification.get(0).toLowerCase();
+
+        if (qualification.contains("phd")) {
+            savedTeacher.setPosition("Assistant Professor");
+        } else {
+            savedTeacher.setPosition("Assistant Lecturer");
+        }
 
         String rawPassword = savedTeacher.getPassword();
 
@@ -223,5 +231,4 @@ public class TeachersService {
 
         teachersRepository.saveAll(allTeachers);
     }
-
 }

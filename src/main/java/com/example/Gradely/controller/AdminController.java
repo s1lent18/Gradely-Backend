@@ -56,11 +56,4 @@ public class AdminController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-
-//    @PutMapping("/update")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public ResponseEntity<String> updateAllSections() {
-//        adminService.updateSections();
-//        return ResponseEntity.ok("Sections updated successfully.");
-//    }
 }

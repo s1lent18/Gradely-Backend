@@ -88,7 +88,7 @@ public class StudentService {
 
         Student savedStudent = studentsRepository.save(student);
 
-        String assignedEmail = body.studentName.replaceAll("\\s+", ".").toLowerCase() + "." + "@uni.com";
+        String assignedEmail = body.studentName.replaceAll("\\s+", ".").toLowerCase() + "@uni.com";
 
         savedStudent.setAssignedEmail(assignedEmail);
 
