@@ -19,28 +19,4 @@ public class Department {
         this.departmentName = departmentName;
         this.hod = hod;
     }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
-    public String getHod() {
-        return hod;
-    }
-
-    public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
-    }
-
-    public void setHod(String hod) {
-        this.hod = hod;
-    }
 }

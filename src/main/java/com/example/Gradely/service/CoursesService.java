@@ -269,6 +269,4 @@ public class CoursesService {
         coursesRepository.save(course);
         teachersRepository.saveAll(teachers);
     }
-
-
 }

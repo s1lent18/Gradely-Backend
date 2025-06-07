@@ -1,6 +1,6 @@
 package com.example.Gradely.controller;
 
-import com.example.Gradely.service.AdminService;
+import com.example.Gradely.database.model.Section;
 import com.example.Gradely.service.TeachersService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +28,8 @@ public class TeachersController {
     private final UserDetailsService userDetailsService;
 
     public static class CourseAssignmentRequest {
-        public List<String> courseIds;
+        public String courseId;
+        public String sectionId;
     }
 
     @Autowired
@@ -52,7 +55,7 @@ public class TeachersController {
             );
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-            String jwt = jwtUtil.generateToken(userDetails.getUsername());
+            String jwt = jwtUtil.generateToken(userDetails);
 
             Map<String, String> response = new HashMap<>();
             response.put("token", jwt);
@@ -67,12 +70,14 @@ public class TeachersController {
 
     @PostMapping("/{teacherId}/assign-courses")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<List<String>> assignCourses(
+    public ResponseEntity<Section> assignCourses(
         @PathVariable String teacherId,
         @RequestBody CourseAssignmentRequest request
     ) {
-        List<String> assignedCourses = teachersService.assignCoursesToTeacher(teacherId, request.courseIds);
-        return ResponseEntity.ok(assignedCourses);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("User Authorities: " + auth.getAuthorities());
+
+        return ResponseEntity.ok(teachersService.assignCourseToTeacher(request.sectionId, teacherId, request.courseId));
     }
 
     @DeleteMapping("/remove-courses-from-all")

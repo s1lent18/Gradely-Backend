@@ -55,7 +55,7 @@ public class StudentController {
             );
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-            String jwt = jwtUtil.generateToken(userDetails.getUsername());
+            String jwt = jwtUtil.generateToken(userDetails);
 
             Map<String, String> response = new HashMap<>();
             response.put("token", jwt);

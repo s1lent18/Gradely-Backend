@@ -6,7 +6,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Document(collection = "teachers")
@@ -41,9 +43,15 @@ public class Teacher {
     private String status;
     private String gender;
     private String departmentId;
-    private int age;
+    private String dob;
     private String password;
-    private List<CourseInfo> courses;
+    private List<Section> sections = new ArrayList<>();
+
+    @Data
+    public static class Section {
+        private String name;
+        private List<CourseInfo> course = new ArrayList<>();
+    }
 
     @Data
     public static class CourseInfo {
@@ -51,38 +59,6 @@ public class Teacher {
         private int rating;
         private String worstRatedComment;
         private String bestRatedComment;
-
-        public String getId() {
-            return id;
-        }
-
-        public int getRating() {
-            return rating;
-        }
-
-        public String getWorstRatedComment() {
-            return worstRatedComment;
-        }
-
-        public String getBestRatedComment() {
-            return bestRatedComment;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public void setRating(int rating) {
-            this.rating = rating;
-        }
-
-        public void setBestRatedComment(String bestRatedComment) {
-            this.bestRatedComment = bestRatedComment;
-        }
-
-        public void setWorstRatedComment(String worstRatedComment) {
-            this.worstRatedComment = worstRatedComment;
-        }
 
         public CourseInfo() {}
 
@@ -96,7 +72,7 @@ public class Teacher {
 
     public Teacher() {}
 
-    public Teacher(String name, String personalEmail, String bloodGroup, String address, String phone, String emergency, String position, List<String> qualification, String gender, Integer age) {
+    public Teacher(String name, String personalEmail, String bloodGroup, String address, String phone, String emergency, String position, List<String> qualification, String gender, String dob) {
         this.name = name;
         this.personalEmail = personalEmail;
         this.bloodGroup = bloodGroup;
@@ -107,152 +83,14 @@ public class Teacher {
         this.hiringYear = String.valueOf(Year.now().getValue());
         this.qualification = qualification;
         this.gender = gender;
-        this.age = age;
+        this.dob = dob;
         this.password = generateRandomPassword();
         this.status = "Probation";
     }
 
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public static int getPasswordLength() {
-        return PASSWORD_LENGTH;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getAssignedEmail() {
-        return assignedEmail;
-    }
-
-    public String getBloodGroup() {
-        return bloodGroup;
-    }
-
-    public String getPersonalEmail() {
-        return personalEmail;
-    }
-
-    public static String getCharSet() {
-        return CHAR_SET;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setAssignedEmail(String assignedEmail) {
-        this.assignedEmail = assignedEmail;
-    }
-
-    public void setBloodGroup(String bloodGroup) {
-        this.bloodGroup = bloodGroup;
-    }
-
-    public void setPersonalEmail(String personalEmail) {
-        this.personalEmail = personalEmail;
-    }
-
-    public String getEmergency() {
-        return emergency;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setEmergency(String emergency) {
-        this.emergency = emergency;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getHiringYear() {
-        return hiringYear;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setQualification(List<String> qualification) {
-        this.qualification = qualification;
-    }
-
-    public void setCourses(List<CourseInfo> courses) {
-        this.courses = courses;
-    }
-
-    public void setHiringYear(String hiringYear) {
-        this.hiringYear = hiringYear;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public List<String> getQualification() {
-        return qualification;
-    }
-
-    public String getDepartmentId() {
-        return departmentId;
-    }
-
     public List<CourseInfo> getCourses() {
-        return courses;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public void setDepartmentId(String departmentId) {
-        this.departmentId = departmentId;
+        return sections.stream()
+                .flatMap(section -> section.getCourse().stream())
+                .collect(Collectors.toList());
     }
 }

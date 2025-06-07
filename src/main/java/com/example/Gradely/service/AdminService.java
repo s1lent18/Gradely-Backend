@@ -1,6 +1,7 @@
 package com.example.Gradely.service;
 
 import com.example.Gradely.database.repository.AdminRepository;
+import lombok.Getter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,16 +19,9 @@ public class AdminService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Getter
     public static class AdminLoginRequest {
         public String adminEmail;
         public String adminPassword;
-
-        public String getAdminPassword() {
-            return adminPassword;
-        }
-
-        public String getAdminEmail() {
-            return adminEmail;
-        }
     }
 }

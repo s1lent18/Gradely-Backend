@@ -1,19 +1,27 @@
 package com.example.Gradely.service;
 
+import com.example.Gradely.database.model.Course;
 import com.example.Gradely.database.model.Student;
+import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.StudentsRepository;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class StudentService {
 
     private final StudentsRepository studentsRepository;
+    private final CoursesRepository courseRepository;
 
-    public StudentService(StudentsRepository studentsRepository) {
+    public StudentService(StudentsRepository studentsRepository, CoursesRepository courseRepository) {
         this.studentsRepository = studentsRepository;
+        this.courseRepository = courseRepository;
     }
 
     public static class StudentRequest {
@@ -29,17 +37,29 @@ public class StudentService {
         public String dob;
     }
 
+    public static class CourseRegistration {
+        public String section;
+        public String teacher;
+        public String courseCode;
+        public String courseName;
+        public Integer creditHours;
+        public String status;
+        public PreReqResult preReqResult;
+    }
+
+    public static class PreReqResult {
+        public String courseCode;
+        public String courseName;
+        public Integer creditHours;
+        public String status;
+        public Double gpa;
+    }
+
+    @Getter
     public static class StudentLoginRequest {
         public String email;
         public String password;
 
-        public String getPassword() {
-            return password;
-        }
-
-        public String getEmail() {
-            return email;
-        }
     }
 
     public static class StudentResponse {
@@ -117,22 +137,44 @@ public class StudentService {
         );
     }
 
-//    private String assignSection(String degree, String batch) {
-//        List<Character> sectionSuffixes = new ArrayList<>();
-//        for (char c = 'A'; c <= 'J'; c++) {
-//            sectionSuffixes.add(c);
-//        }
-//
-//        Collections.shuffle(sectionSuffixes);
-//
-//        for (char suffix : sectionSuffixes) {
-//            String section = degree + "-1" + suffix;
-//            long count = studentsRepository.countByDegreeAndBatchAndSection(degree, batch, section);
-//            if (count < 50) {
-//                return section;
-//            }
-//        }
-//
-//        throw new RuntimeException("All sections for degree " + degree + " in batch " + batch + " are full.");
-//    }
+    @Transactional
+    public List<CourseRegistration> registerCourses(String studentId, List<String> courseIds) {
+        Student student = studentsRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student Not Found"));
+
+        List<Course> courses = courseRepository.findAllById(courseIds);
+
+        if (courses.size() != courseIds.size()) {
+            throw new RuntimeException("Some course IDs are invalid");
+        }
+
+        List<CourseRegistration> registration = new ArrayList<>();
+
+        for (Course course : courses) {
+            CourseRegistration registrationForm = new CourseRegistration();
+            registrationForm.courseCode = course.getCourseCode();
+            registrationForm.courseName = course.getCourseName();
+            registrationForm.creditHours = course.getCreditHours();
+            registrationForm.status = course.getStatus();
+
+            if (course.getPreReqCode() != null) {
+                Course preReqCourse = courseRepository.findByCourseCode(course.getPreReqCode()).orElse(null);
+
+                if (preReqCourse != null) {
+                    PreReqResult preReq = new PreReqResult();
+                    preReq.courseCode = preReqCourse.getCourseCode();
+                    preReq.courseName = preReqCourse.getCourseName();
+                    preReq.creditHours = preReqCourse.getCreditHours();
+
+                    if (student.getSemesters() != null) {
+                        for (Student.Semester semester : student.getSemesters()) {
+
+                        }
+                    }
+                }
+
+            }
+        }
+
+        return registration;
+    }
 }

@@ -42,7 +42,7 @@ public class AdminController {
             );
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getAdminEmail());
-            String jwt = jwtUtil.generateToken(userDetails.getUsername());
+            String jwt = jwtUtil.generateToken(userDetails);
 
             Map<String, String> response = new HashMap<>();
             response.put("token", jwt);

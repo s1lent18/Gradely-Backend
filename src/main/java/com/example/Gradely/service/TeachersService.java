@@ -2,17 +2,18 @@ package com.example.Gradely.service;
 
 import com.example.Gradely.database.model.Course;
 import com.example.Gradely.database.model.Department;
+import com.example.Gradely.database.model.Section;
 import com.example.Gradely.database.model.Teacher;
 import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.DepartmentsRepository;
+import com.example.Gradely.database.repository.SectionRepository;
 import com.example.Gradely.database.repository.TeachersRepository;
+import lombok.Getter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,12 +23,14 @@ public class TeachersService {
     private final DepartmentsRepository departmentsRepository;
     private final CoursesRepository coursesRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SectionRepository sectionRepository;
 
-    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository, CoursesRepository coursesRepository, PasswordEncoder passwordEncoder) {
+    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository, CoursesRepository coursesRepository, PasswordEncoder passwordEncoder, SectionRepository sectionRepository) {
         this.teachersRepository = teachersRepository;
         this.departmentsRepository = departmentsRepository;
         this.coursesRepository = coursesRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sectionRepository = sectionRepository;
     }
 
     public static class TeacherRequest {
@@ -37,24 +40,17 @@ public class TeachersService {
         public String personalEmail;
         public String phone;
         public String emergency;
-        public String position;
         public String gender;
         public List<String> qualification;
-        public Integer age;
+        public String dob;
         public String departmentId;
     }
 
+    @Getter
     public static class TeacherLoginRequest {
         public String email;
         public String password;
 
-        public String getPassword() {
-            return password;
-        }
-
-        public String getEmail() {
-            return email;
-        }
     }
 
     public static class TeachersResponse {
@@ -115,7 +111,7 @@ public class TeachersService {
                 "",
                 body.qualification,
                 body.gender,
-                body.age
+                body.dob
         );
 
         teacher.setDepartmentId(body.departmentId);
@@ -158,77 +154,88 @@ public class TeachersService {
     }
 
     @Transactional
-    public List<String> assignCoursesToTeacher(String teacherId, List<String> courseIds) {
+    public Section assignCourseToTeacher(String sectionId, String teacherId, String courseId) {
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new RuntimeException("Section not found"));
+
         Teacher teacher = teachersRepository.findById(teacherId)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
 
-        List<Course> courses = coursesRepository.findAllById(courseIds);
+        Course course = coursesRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        if (courses.size() != courseIds.size()) {
-            throw new RuntimeException("One or more courses not found");
+        if (section.getClasses() == null) {
+            section.setClasses(new Section.Class());
         }
 
-        List<Teacher.CourseInfo> courseInfos = courses.stream().map(course -> {
-            Teacher.CourseInfo info = new Teacher.CourseInfo();
-            info.setId(course.getId());
-            info.setRating(0);
-            info.setBestRatedComment("");
-            info.setWorstRatedComment("");
-            return info;
-        }).toList();
+        Section.Class sectionClass = section.getClasses();
+        sectionClass.setTeacher(teacherId);
+        sectionClass.setCourse(courseId);
 
-        if (teacher.getCourses() == null) {
-            teacher.setCourses(new ArrayList<>());
+        if (sectionClass.getStudents() == null) {
+            sectionClass.setStudents(new ArrayList<>());
         }
-        teacher.getCourses().addAll(courseInfos);
 
-        for (Course course : courses) {
-            if (course.getTeachers() == null) {
-                course.setTeachers(new ArrayList<>());
+        if (sectionClass.getAttendance() == null) {
+            sectionClass.setAttendance(new ArrayList<>());
+        }
+
+        Optional<Teacher.Section> teacherSectionOpt = teacher.getSections().stream()
+                .filter(sec -> sec.getName().equalsIgnoreCase(section.getName()))
+                .findFirst();
+
+        Teacher.CourseInfo courseInfo = new Teacher.CourseInfo(courseId, 0, "", "");
+
+        if (teacherSectionOpt.isPresent()) {
+            Teacher.Section teacherSection = teacherSectionOpt.get();
+            boolean alreadyAssigned = teacherSection.getCourse().stream()
+                    .anyMatch(c -> c.getId().equals(courseId));
+
+            if (!alreadyAssigned) {
+                teacherSection.getCourse().add(courseInfo);
             }
-
-            Course.TeacherInfo teacherInfo = new Course.TeacherInfo();
-            teacherInfo.setId(teacher.getId());
-            teacherInfo.setName(teacher.getName());
-            teacherInfo.setSections(new ArrayList<>());
-
-            course.getTeachers().add(teacherInfo);
+        } else {
+            Teacher.Section newSection = new Teacher.Section();
+            newSection.setName(section.getName());
+            newSection.setCourse(new ArrayList<>(List.of(courseInfo)));
+            teacher.getSections().add(newSection);
         }
 
+        sectionRepository.save(section);
         teachersRepository.save(teacher);
-        coursesRepository.saveAll(courses);
 
-        return teacher.getCourses().stream()
-                .map(c -> String.valueOf(c.getId()))
-                .collect(Collectors.toList());
+        return section;
     }
+
+
+
 
     @Transactional
     public void removeAllCoursesFromAllTeachers() {
         List<Teacher> allTeachers = teachersRepository.findAll();
 
         for (Teacher teacher : allTeachers) {
-            List<Teacher.CourseInfo> teacherCourses = teacher.getCourses();
-            if (teacherCourses != null && !teacherCourses.isEmpty()) {
-                List<String> courseIds = teacherCourses.stream()
-                        .map(courseInfo -> String.valueOf(courseInfo.getId()))
-                        .collect(Collectors.toList());
+            Set<String> courseIds = new HashSet<>();
 
-                List<Course> courses = coursesRepository.findAllById(courseIds);
-
-                for (Course course : courses) {
-                    List<Course.TeacherInfo> teacherInfos = course.getTeachers();
-                    if (teacherInfos != null) {
-                        teacherInfos.removeIf(ti -> Objects.equals(ti.getId(), teacher.getId()));
-                    }
+            for (Teacher.Section section : teacher.getSections()) {
+                for (Teacher.CourseInfo courseInfo : section.getCourse()) {
+                    courseIds.add(courseInfo.getId());
                 }
-
-                coursesRepository.saveAll(courses);
             }
 
-            teacher.setCourses(new ArrayList<>());
+            List<Course> courses = coursesRepository.findAllById(courseIds.stream().toList());
+
+            for (Course course : courses) {
+                if (course.getTeachers() != null) {
+                    course.getTeachers().removeIf(ti -> Objects.equals(ti.getId(), teacher.getId()));
+                }
+            }
+
+            coursesRepository.saveAll(courses);
+            teacher.setSections(new ArrayList<>());
         }
 
         teachersRepository.saveAll(allTeachers);
     }
+
 }
