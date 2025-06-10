@@ -47,7 +47,7 @@ public class Student {
     private int chAttempted;
     private int chCleared;
     private String password;
-    private Semester semesters;
+    private List<Semester> semesters;
 
     @Data
     public static class Semester {

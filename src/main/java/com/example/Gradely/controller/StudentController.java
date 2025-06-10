@@ -3,19 +3,16 @@ package com.example.Gradely.controller;
 import com.example.Gradely.service.StudentService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -40,6 +37,12 @@ public class StudentController {
         this.jwtUtil = jwtUtil;
     }
 
+    public static class StudentRegisterCourses {
+        public List<String> courseIds;
+        public List<String> sectionIds;
+        public List<String> teacherIds;
+    }
+
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<StudentService.StudentResponse> addStudent(@RequestBody StudentService.StudentRequest request) {
@@ -48,25 +51,41 @@ public class StudentController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody StudentService.StudentLoginRequest request) {
+    public ResponseEntity<Map<String, StudentService.StudentGetResponse>> login(@RequestBody StudentService.StudentLoginRequest request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-            String jwt = jwtUtil.generateToken(userDetails);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("token", jwt);
+            StudentService.StudentGetResponse getResponse = studentService.getStudent(request.email);
+
+            getResponse.token = jwtUtil.generateToken(userDetails);
+
+            Map<String, StudentService.StudentGetResponse> response = new HashMap<>();
+            response.put("token", getResponse);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
 
-            Map<String, String> response = new HashMap<>();
-            response.put("msg", "Invalid Email or Password");
+            Map<String, StudentService.StudentGetResponse> response = new HashMap<>();
 
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    @PostMapping("/{studentId}/register")
+    @PreAuthorize("hasAuthority('STUDENT')")
+    public ResponseEntity<List<StudentService.CourseRegistration>> registerCourse(@PathVariable String studentId, @RequestBody StudentRegisterCourses request) {
+        List<StudentService.CourseRegistration> response = studentService.registerCourses(studentId, request.courseIds, request.sectionIds, request.teacherIds);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{studentId}/getStudent")
+    @PreAuthorize("hasAuthority('STUDENT')")
+    public ResponseEntity<StudentService.StudentGetResponse> getStudent(@PathVariable String studentId) {
+        StudentService.StudentGetResponse response = studentService.getStudent(studentId);
+        return ResponseEntity.ok(response);
     }
 }
