@@ -15,23 +15,27 @@ public class Section {
     private String id;
 
     private String name;
-    private Class  classes;
+    private List<Class>  classes;
 
     @Data
     public static class Class {
         private String course;
         private String teacher;
-        private List<String> students;
-        private List<AttendanceEntry> attendance;
+        private List<StudentAttendance> studentAttendance;
 
         public Class() {}
 
-        public Class(String course, String teacher, List<String> students, List<AttendanceEntry> attendance) {
+        public Class(String course, String teacher, List<StudentAttendance> studentAttendance) {
             this.course = course;
             this.teacher = teacher;
-            this.students = students;
-            this.attendance = attendance;
+            this.studentAttendance = studentAttendance;
         }
+    }
+
+    @Data
+    public static class StudentAttendance {
+        private String student;
+        private List<AttendanceEntry> attendance;
     }
 
     @Data
@@ -42,7 +46,7 @@ public class Section {
 
     public Section() {}
 
-    public Section(String name, Class classes) {
+    public Section(String name, List<Class> classes) {
         this.name = name;
         this.classes = classes;
     }

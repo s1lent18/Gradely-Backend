@@ -215,6 +215,22 @@ public class StudentService {
             Section section = sections.get(i);
             Teacher teacher = teachers.get(i);
 
+            Section.Class matchingClass = getAClass(section, course, teacher);
+
+            if (matchingClass.getStudentAttendance() == null) {
+                matchingClass.setStudentAttendance(new ArrayList<>());
+            }
+
+            boolean alreadyExists = matchingClass.getStudentAttendance().stream()
+                    .anyMatch(sa -> sa.getStudent().equals(studentId));
+
+            if (!alreadyExists) {
+                Section.StudentAttendance sa = new Section.StudentAttendance();
+                sa.setStudent(studentId);
+                sa.setAttendance(new ArrayList<>());
+                matchingClass.getStudentAttendance().add(sa);
+            }
+
             CourseRegistration registrationForm = new CourseRegistration();
             registrationForm.courseCode = course.getCourseCode();
             registrationForm.courseName = course.getCourseName();
@@ -257,14 +273,6 @@ public class StudentService {
                 }
             }
 
-            Section.Class sectionClass = section.getClasses();
-            if (sectionClass.getStudents() == null) {
-                sectionClass.setStudents(new ArrayList<>());
-            }
-
-            if (!sectionClass.getStudents().contains(studentId)) {
-                sectionClass.getStudents().add(studentId);
-            }
             sectionRepository.save(section);
 
             Student.Courses newCourse = new Student.Courses();
@@ -288,6 +296,24 @@ public class StudentService {
         studentsRepository.save(student);
 
         return registration;
+    }
+
+    private static Section.Class getAClass(Section section, Course course, Teacher teacher) {
+        Section.Class matchingClass = null;
+        if (section.getClasses() != null) {
+            for (Section.Class cl : section.getClasses()) {
+                if (course.getCourseCode().equalsIgnoreCase(cl.getCourse()) &&
+                        teacher.getId().equals(cl.getTeacher())) {
+                    matchingClass = cl;
+                    break;
+                }
+            }
+        }
+
+        if (matchingClass == null) {
+            throw new RuntimeException("No matching class found in section " + section.getId() + " for course " + course.getCourseCode());
+        }
+        return matchingClass;
     }
 
     public StudentGetResponse getStudent(String assignedEmail) {

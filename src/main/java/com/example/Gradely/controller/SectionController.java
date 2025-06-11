@@ -22,7 +22,7 @@ public class SectionController {
 
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<SectionService.SectionAddResponse> addStudent(@RequestBody SectionService.SectionAddRequest request) {
+    public ResponseEntity<SectionService.SectionAddResponse> addSection(@RequestBody SectionService.SectionAddRequest request) {
         SectionService.SectionAddResponse response = sectionService.add(request);
         return ResponseEntity.ok(response);
     }

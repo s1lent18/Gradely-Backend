@@ -5,6 +5,9 @@ import com.example.Gradely.database.repository.SectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class SectionService {
 
@@ -21,9 +24,9 @@ public class SectionService {
     public static class SectionAddResponse {
         public String id;
         public String name;
-        public Section.Class classes;
+        public List<Section.Class> classes;
 
-        public SectionAddResponse(String id, String name, Section.Class classes) {
+        public SectionAddResponse(String id, String name, List<Section.Class> classes) {
             this.id = id;
             this.name = name;
             this.classes = classes;
@@ -35,7 +38,7 @@ public class SectionService {
 
         Section section = new Section();
         section.setName(body.name);
-        section.setClasses(new Section.Class());
+        section.setClasses(new ArrayList<>());
 
         sectionRepository.save(section);
 

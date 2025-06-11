@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class TeachersService {
@@ -165,20 +164,15 @@ public class TeachersService {
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
         if (section.getClasses() == null) {
-            section.setClasses(new Section.Class());
+            section.setClasses(new ArrayList<>());
         }
 
-        Section.Class sectionClass = section.getClasses();
+        Section.Class sectionClass = new Section.Class();
         sectionClass.setTeacher(teacherId);
         sectionClass.setCourse(courseId);
+        sectionClass.setStudentAttendance(new ArrayList<>());
 
-        if (sectionClass.getStudents() == null) {
-            sectionClass.setStudents(new ArrayList<>());
-        }
-
-        if (sectionClass.getAttendance() == null) {
-            sectionClass.setAttendance(new ArrayList<>());
-        }
+        section.getClasses().add(sectionClass);
 
         Optional<Teacher.Section> teacherSectionOpt = teacher.getSections().stream()
                 .filter(sec -> sec.getName().equalsIgnoreCase(section.getName()))
@@ -201,14 +195,35 @@ public class TeachersService {
             teacher.getSections().add(newSection);
         }
 
+        if (course.getTeachers() == null) {
+            course.setTeachers(new ArrayList<>());
+        }
+
+        Optional<Course.TeacherInfo> teacherInCourse = course.getTeachers().stream()
+                .filter(t -> t.getId().equals(teacherId))
+                .findFirst();
+
+        if (teacherInCourse.isPresent()) {
+            Course.TeacherInfo ti = teacherInCourse.get();
+            if (!ti.getSections().contains(section.getName())) {
+                ti.getSections().add(section.getName());
+            }
+        } else {
+            Course.TeacherInfo newTeacherInfo = new Course.TeacherInfo(
+                    teacherId,
+                    teacher.getName(),
+                    teacher.getAssignedEmail(),
+                    new ArrayList<>(List.of(section.getName()))
+            );
+            course.getTeachers().add(newTeacherInfo);
+        }
+
         sectionRepository.save(section);
         teachersRepository.save(teacher);
+        coursesRepository.save(course);
 
         return section;
     }
-
-
-
 
     @Transactional
     public void removeAllCoursesFromAllTeachers() {

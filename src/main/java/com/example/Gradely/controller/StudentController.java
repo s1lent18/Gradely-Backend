@@ -64,7 +64,7 @@ public class StudentController {
             getResponse.token = jwtUtil.generateToken(userDetails);
 
             Map<String, StudentService.StudentGetResponse> response = new HashMap<>();
-            response.put("token", getResponse);
+            response.put("studentData", getResponse);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
