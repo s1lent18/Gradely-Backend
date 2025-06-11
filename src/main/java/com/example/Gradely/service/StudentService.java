@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class StudentService {
@@ -141,6 +143,12 @@ public class StudentService {
         }
     }
 
+    public static class StudentRegisterRequest {
+        public String courseId;
+        public String sectionId;
+        public String teacherId;
+    }
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -181,22 +189,27 @@ public class StudentService {
     }
 
     @Transactional
-    public List<CourseRegistration> registerCourses(String studentId, List<String> courseIds, List<String> sectionIds, List<String> teacherIds) {
-        Student student = studentsRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student Not Found"));
+    public List<CourseRegistration> registerCourses(String studentId, List<StudentRegisterRequest> request) {
+        Student student = studentsRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student Not Found"));
 
-        List<Course> courses = courseRepository.findAllById(courseIds);
+        List<String> courseIds = request.stream().map(r -> r.courseId).collect(Collectors.toList());
+        List<String> sectionIds = request.stream().map(r -> r.sectionId).collect(Collectors.toList());
+        List<String> teacherIds = request.stream().map(r -> r.teacherId).collect(Collectors.toList());
 
-        List<Section> sections = sectionRepository.findAllById(sectionIds);
+        Map<String, Course> courseMap = courseRepository.findAllById(courseIds)
+                .stream().collect(Collectors.toMap(Course::getId, c -> c));
+        Map<String, Section> sectionMap = sectionRepository.findAllById(sectionIds)
+                .stream().collect(Collectors.toMap(Section::getId, s -> s));
+        Map<String, Teacher> teacherMap = teachersRepository.findAllById(teacherIds)
+                .stream().collect(Collectors.toMap(Teacher::getId, t -> t));
 
-        List<Teacher> teachers = teachersRepository.findAllById(teacherIds);
-
-        if (courses.size() != courseIds.size()) {
+        if (courseMap.size() != courseIds.size())
             throw new RuntimeException("Some course IDs are invalid");
-        }
-
-        if (sections.size() != courseIds.size() || teachers.size() != courseIds.size()) {
-            throw new RuntimeException("Section or Teacher mapping mismatch with courses");
-        }
+        if (sectionMap.size() != sectionIds.size())
+            throw new RuntimeException("Some section IDs are invalid");
+        if (teacherMap.size() != teacherIds.size())
+            throw new RuntimeException("Some teacher IDs are invalid");
 
         int currentSemesterNumber = (student.getSemesters() != null && !student.getSemesters().isEmpty())
                 ? student.getSemesters().get(student.getSemesters().size() - 1).getNumber() + 1
@@ -210,11 +223,52 @@ public class StudentService {
 
         List<CourseRegistration> registration = new ArrayList<>();
 
-        for (int i = 0; i < courses.size(); i++) {
-            Course course = courses.get(i);
-            Section section = sections.get(i);
-            Teacher teacher = teachers.get(i);
+        for (StudentRegisterRequest req : request) {
+            Course course = courseMap.get(req.courseId);
+            Section section = sectionMap.get(req.sectionId);
+            Teacher teacher = teacherMap.get(req.teacherId);
 
+            // Check pre-req
+            PreReqResult preReq = null;
+            if (course.getPreReqCode() != null) {
+                Course preReqCourse = courseRepository.findByCourseCode(course.getPreReqCode()).orElse(null);
+
+                if (preReqCourse == null) {
+                    throw new RuntimeException("Pre-requisite course not found for: " + course.getCourseCode());
+                }
+
+                boolean completed = false;
+                Double foundGpa = null;
+
+                if (student.getSemesters() != null) {
+                    for (Student.Semester sem : student.getSemesters()) {
+                        for (Student.Courses attempted : sem.getCourses()) {
+                            if (attempted.getDetails() != null &&
+                                    attempted.getDetails().getCourseCode().equalsIgnoreCase(preReqCourse.getCourseCode())) {
+                                completed = true;
+                                foundGpa = attempted.getGpa();
+                                break;
+                            }
+                        }
+                        if (completed) break;
+                    }
+                }
+
+                if (!completed) {
+                    throw new RuntimeException("Cannot register for " + course.getCourseCode()
+                            + ". Prerequisite " + preReqCourse.getCourseCode() + " has not been completed.");
+                }
+
+                // ✅ Set preReqResult
+                preReq = new PreReqResult();
+                preReq.courseCode = preReqCourse.getCourseCode();
+                preReq.courseName = preReqCourse.getCourseName();
+                preReq.creditHours = preReqCourse.getCreditHours();
+                preReq.status = preReqCourse.getStatus();
+                preReq.gpa = foundGpa != null ? foundGpa : 0.0;
+            }
+
+            // Register the student in the class
             Section.Class matchingClass = getAClass(section, course, teacher);
 
             if (matchingClass.getStudentAttendance() == null) {
@@ -231,6 +285,7 @@ public class StudentService {
                 matchingClass.getStudentAttendance().add(sa);
             }
 
+            // Create registration form
             CourseRegistration registrationForm = new CourseRegistration();
             registrationForm.courseCode = course.getCourseCode();
             registrationForm.courseName = course.getCourseName();
@@ -238,43 +293,11 @@ public class StudentService {
             registrationForm.status = course.getStatus();
             registrationForm.section = section.getId();
             registrationForm.teacher = teacher.getId();
-
-            if (course.getPreReqCode() != null) {
-                Course preReqCourse = courseRepository.findByCourseCode(course.getPreReqCode())
-                        .orElse(null);
-
-                if (preReqCourse != null) {
-                    PreReqResult preReq = new PreReqResult();
-                    preReq.courseCode = preReqCourse.getCourseCode();
-                    preReq.courseName = preReqCourse.getCourseName();
-                    preReq.creditHours = preReqCourse.getCreditHours();
-
-                    boolean completed = false;
-                    Double foundGpa = null;
-
-                    if (student.getSemesters() != null) {
-                        for (Student.Semester sem : student.getSemesters()) {
-                            for (Student.Courses attempted : sem.getCourses()) {
-                                if (attempted.getDetails() != null &&
-                                        attempted.getDetails().getCourseCode().equalsIgnoreCase(preReqCourse.getCourseCode())) {
-                                    completed = true;
-                                    foundGpa = attempted.getGpa();
-                                    break;
-                                }
-                            }
-                            if (completed) break;
-                        }
-                    }
-
-                    preReq.status = preReqCourse.getStatus();
-                    preReq.gpa = foundGpa != null ? foundGpa : 0.0;
-
-                    registrationForm.preReqResult = preReq;
-                }
-            }
+            registrationForm.preReqResult = preReq; 
 
             sectionRepository.save(section);
 
+            // Add to student semester
             Student.Courses newCourse = new Student.Courses();
             newCourse.setCourseId(course.getId());
             newCourse.setSection(section.getId());
@@ -298,23 +321,21 @@ public class StudentService {
         return registration;
     }
 
-    private static Section.Class getAClass(Section section, Course course, Teacher teacher) {
-        Section.Class matchingClass = null;
-        if (section.getClasses() != null) {
-            for (Section.Class cl : section.getClasses()) {
-                if (course.getCourseCode().equalsIgnoreCase(cl.getCourse()) &&
-                        teacher.getId().equals(cl.getTeacher())) {
-                    matchingClass = cl;
-                    break;
-                }
-            }
+
+
+    private Section.Class getAClass(Section section, Course course, Teacher teacher) {
+        if (section.getClasses() == null || section.getClasses().isEmpty()) {
+            throw new RuntimeException("No classes defined in section " + section.getId());
         }
 
-        if (matchingClass == null) {
-            throw new RuntimeException("No matching class found in section " + section.getId() + " for course " + course.getCourseCode());
-        }
-        return matchingClass;
+        return section.getClasses().stream()
+                .filter(cls -> course.getId().equals(cls.getCourse()) &&
+                        teacher.getId().equals(cls.getTeacher()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No matching class found in section "
+                        + section.getId() + " for course " + course.getCourseCode()));
     }
+
 
     public StudentGetResponse getStudent(String assignedEmail) {
         Student student = studentsRepository.findByAssignedEmail(assignedEmail).orElseThrow(() -> new RuntimeException("Student Not Found"));

@@ -179,8 +179,6 @@ public class CoursesService {
         }).toList();
     }
 
-
-
     @Transactional
     public CourseResponse add(CourseRequest body) {
         Department dept = departmentsRepository.findById(body.departmentId)

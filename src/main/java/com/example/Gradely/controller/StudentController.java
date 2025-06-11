@@ -38,9 +38,7 @@ public class StudentController {
     }
 
     public static class StudentRegisterCourses {
-        public List<String> courseIds;
-        public List<String> sectionIds;
-        public List<String> teacherIds;
+        public List<StudentService.StudentRegisterRequest> requests;
     }
 
     @PostMapping("/add")
@@ -78,7 +76,7 @@ public class StudentController {
     @PostMapping("/{studentId}/register")
     @PreAuthorize("hasAuthority('STUDENT')")
     public ResponseEntity<List<StudentService.CourseRegistration>> registerCourse(@PathVariable String studentId, @RequestBody StudentRegisterCourses request) {
-        List<StudentService.CourseRegistration> response = studentService.registerCourses(studentId, request.courseIds, request.sectionIds, request.teacherIds);
+        List<StudentService.CourseRegistration> response = studentService.registerCourses(studentId, request.requests);
         return ResponseEntity.ok(response);
     }
 
