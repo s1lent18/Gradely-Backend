@@ -46,6 +46,7 @@ public class Student {
     private double cgpa;
     private int chAttempted;
     private int chCleared;
+    private int warningCount;
     private String password;
     private List<Semester> semesters;
 
@@ -108,6 +109,7 @@ public class Student {
         this.cgpa = 0.0;
         this.chAttempted = 0;
         this.chCleared = 0;
+        this.warningCount = 0;
         this.password = generateRandomPassword();
     }
 

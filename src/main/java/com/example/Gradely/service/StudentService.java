@@ -87,9 +87,11 @@ public class StudentService {
         public String degree;
         public String gender;
         public String dob;
+        public String status;
+        public Integer warningCount;
         public List<Student.Semester> semesters;
 
-        public StudentGetResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String assignedEmail, String phone, String emergency, String batch, String degree, String gender, String dob, List<Student.Semester> semesters) {
+        public StudentGetResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String assignedEmail, String phone, String emergency, String batch, String degree, String gender, String dob, List<Student.Semester> semesters, String status, Integer warningCount) {
             this.studentId = studentId;
             this.studentName = studentName;
             this.fatherName = fatherName;
@@ -103,6 +105,8 @@ public class StudentService {
             this.degree = degree;
             this.gender = gender;
             this.dob = dob;
+            this.status = status;
+            this.warningCount = warningCount;
             this.semesters = semesters;
         }
     }
@@ -123,8 +127,9 @@ public class StudentService {
         public String password;
         public String assignedEmail;
         public Integer semester;
+        public Integer warningCount;
 
-        public StudentResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String degree, String gender, String dob, String password, String assignedEmail, String batch, Integer semester) {
+        public StudentResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String phone, String emergency, String degree, String gender, String dob, String password, String assignedEmail, String batch, Integer semester, Integer warningCount) {
             this.studentId = studentId;
             this.studentName = studentName;
             this.fatherName = fatherName;
@@ -140,6 +145,7 @@ public class StudentService {
             this.password = password;
             this.assignedEmail = assignedEmail;
             this.semester = semester;
+            this.warningCount = warningCount;
         }
     }
 
@@ -184,7 +190,8 @@ public class StudentService {
             rawPassword,
             savedStudent.getAssignedEmail(),
             savedStudent.getBatch(),
-            1
+            1,
+            0
         );
     }
 
@@ -321,8 +328,6 @@ public class StudentService {
         return registration;
     }
 
-
-
     private Section.Class getAClass(Section section, Course course, Teacher teacher) {
         if (section.getClasses() == null || section.getClasses().isEmpty()) {
             throw new RuntimeException("No classes defined in section " + section.getId());
@@ -335,7 +340,6 @@ public class StudentService {
                 .orElseThrow(() -> new RuntimeException("No matching class found in section "
                         + section.getId() + " for course " + course.getCourseCode()));
     }
-
 
     public StudentGetResponse getStudent(String assignedEmail) {
         Student student = studentsRepository.findByAssignedEmail(assignedEmail).orElseThrow(() -> new RuntimeException("Student Not Found"));
@@ -354,7 +358,9 @@ public class StudentService {
                 student.getDegree(),
                 student.getGender(),
                 student.getDob(),
-                student.getSemesters()
+                student.getSemesters(),
+                student.getStatus(),
+                student.getWarningCount()
         );
     }
 }
