@@ -89,9 +89,12 @@ public class StudentService {
         public String dob;
         public String status;
         public Integer warningCount;
+        public Integer creditsAttempted;
+        public Integer creditsEarned;
+        public Double cgpa;
         public List<Student.Semester> semesters;
 
-        public StudentGetResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String assignedEmail, String phone, String emergency, String batch, String degree, String gender, String dob, List<Student.Semester> semesters, String status, Integer warningCount) {
+        public StudentGetResponse(String studentId, String studentName, String fatherName, String bloodGroup, String address, String personalEmail, String assignedEmail, String phone, String emergency, String batch, String degree, String gender, String dob, String status, Integer warningCount, Integer creditsAttempted, Integer creditsEarned, Double cgpa, List<Student.Semester> semesters) {
             this.studentId = studentId;
             this.studentName = studentName;
             this.fatherName = fatherName;
@@ -107,6 +110,9 @@ public class StudentService {
             this.dob = dob;
             this.status = status;
             this.warningCount = warningCount;
+            this.creditsAttempted = creditsAttempted;
+            this.creditsEarned = creditsEarned;
+            this.cgpa = cgpa;
             this.semesters = semesters;
         }
     }
@@ -358,9 +364,12 @@ public class StudentService {
                 student.getDegree(),
                 student.getGender(),
                 student.getDob(),
-                student.getSemesters(),
                 student.getStatus(),
-                student.getWarningCount()
+                student.getWarningCount(),
+                student.getChAttempted(),
+                student.getChCleared(),
+                student.getCgpa(),
+                student.getSemesters()
         );
     }
 }
