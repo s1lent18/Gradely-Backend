@@ -98,6 +98,10 @@ public class AdminService {
                 }
             }
 
+            if (sectionIds.isEmpty() || teacherIds.isEmpty()) {
+                throw new RuntimeException("Course [" + course.getCourseCode() + "] is not associated with any section or teacher.");
+            }
+
             CourseRegistrationInit dto = new CourseRegistrationInit();
             dto.courseId = course.getId();
             dto.courseCode = course.getCourseCode();

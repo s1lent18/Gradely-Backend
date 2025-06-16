@@ -4,6 +4,7 @@ import com.example.Gradely.service.AdminService;
 import com.example.Gradely.service.StudentService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -59,12 +60,18 @@ public class AdminController {
 
     @PostMapping("/setRegistration")
     public ResponseEntity<Map<String, String>> setCourseRegistration(@RequestBody List<AdminService.CourseRegistrationAdd> request) {
-        String Id = adminService.addCoursesForRegistration(request);
-
         Map<String, String> response = new HashMap<>();
-        response.put("Id:", Id);
-
-        return ResponseEntity.ok(response);
+        try {
+            String Id = adminService.addCoursesForRegistration(request);
+            response.put("Id:", Id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("error", "Internal server error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @GetMapping("/allowRegistration")
