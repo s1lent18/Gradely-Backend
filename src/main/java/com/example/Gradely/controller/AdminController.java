@@ -1,7 +1,6 @@
 package com.example.Gradely.controller;
 
 import com.example.Gradely.service.AdminService;
-import com.example.Gradely.service.StudentService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -78,5 +77,23 @@ public class AdminController {
     public ResponseEntity<List<AdminService.CourseRegistrationInit>> allowCourseRegistration() {
         List<AdminService.CourseRegistrationInit> result = adminService.allowCourseRegistration();
         return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("{courseId}/clearAssociation")
+    public ResponseEntity<Map<String, String>> clearAssociation(@PathVariable String courseId) {
+        try {
+            adminService.clearTeacherAndSectionsFromCourse(courseId);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "All teachers and sections removed from course successfully.");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Internal server error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 }

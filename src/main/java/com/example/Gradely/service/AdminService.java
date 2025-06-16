@@ -128,4 +128,14 @@ public class AdminService {
                 .map(Registrations::getAvailableCourses)
                 .orElseThrow(() -> new RuntimeException("No registration options available"));
     }
+
+    @Transactional
+    public void clearTeacherAndSectionsFromCourse(String courseId) {
+        Course course = coursesRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        course.setTeachers(new ArrayList<>());
+
+        coursesRepository.save(course);
+    }
 }
