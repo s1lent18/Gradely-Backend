@@ -56,13 +56,13 @@ public class Teacher {
     @Data
     public static class CourseInfo {
         private String id;
-        private int rating;
+        private Double rating;
         private String worstRatedComment;
         private String bestRatedComment;
 
         public CourseInfo() {}
 
-        public CourseInfo(String id, int rating, String worstRatedComment, String bestRatedComment) {
+        public CourseInfo(String id, Double rating, String worstRatedComment, String bestRatedComment) {
             this.id = id;
             this.rating = rating;
             this.worstRatedComment = worstRatedComment;

@@ -80,9 +80,9 @@ public class AdminController {
     }
 
     @DeleteMapping("{courseId}/clearAssociation")
-    public ResponseEntity<Map<String, String>> clearAssociation(@PathVariable String courseId) {
+    public ResponseEntity<Map<String, String>> clearAssociation() {
         try {
-            adminService.clearTeacherAndSectionsFromCourse(courseId);
+            adminService.clearTeacherAndSectionsFromCourse();
             Map<String, String> response = new HashMap<>();
             response.put("message", "All teachers and sections removed from course successfully.");
             return ResponseEntity.ok(response);

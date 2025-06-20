@@ -54,8 +54,6 @@ public class Student {
     public static class Semester {
         private int number;
         private List<Courses> courses;
-        private List<String> sections;
-        private List<Double> gpa;
     }
 
     @Data
