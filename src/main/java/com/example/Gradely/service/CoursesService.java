@@ -256,7 +256,7 @@ public class CoursesService {
             if (!alreadyAssigned) {
                 teacher.getCourses().add(new Teacher.CourseInfo(
                         course.getId(),
-                        0,
+                        0.0,
                         "",
                         ""
                 ));

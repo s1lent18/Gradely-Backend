@@ -154,16 +154,16 @@ public class AdminService {
         List<PastRecords> pastRecords = new ArrayList<>();
 
         for (Course course : courses) {
-            CourseStats stats = calculateStatsForCourse(course.getId());
-
-            List<PastRecords.Records> recordsList = getRecords(course, teachers, stats);
-
-            if (!recordsList.isEmpty()) {
-                PastRecords past = new PastRecords();
-                past.setCourseId(course.getId());
-                past.setRecords(recordsList);
-                pastRecords.add(past);
-            }
+//            CourseStats stats = calculateStatsForCourse(course.getId());
+//
+//            List<PastRecords.Records> recordsList = getRecords(course, teachers, stats);
+//
+//            if (!recordsList.isEmpty()) {
+//                PastRecords past = new PastRecords();
+//                past.setCourseId(course.getId());
+//                past.setRecords(recordsList);
+//                pastRecords.add(past);
+//            }
 
             course.setTeachers(new ArrayList<>());
         }
@@ -181,7 +181,6 @@ public class AdminService {
         sectionRepository.saveAll(sections);
         teachersRepository.saveAll(teachers);
     }
-
 
     private List<PastRecords.Records> getRecords(Course course, List<Teacher> teachers, CourseStats stats) {
         List<PastRecords.Records> recordsList = new ArrayList<>();
@@ -258,7 +257,6 @@ public class AdminService {
         return stats;
     }
 
-
     private double sumList(List<String> list) {
         if (list == null) return 0;
         return list.stream().mapToDouble(s -> {
@@ -289,5 +287,4 @@ public class AdminService {
         if (score >= 50) return "D";
         return "F";
     }
-
 }

@@ -79,7 +79,7 @@ public class AdminController {
         return ResponseEntity.ok(result);
     }
 
-    @DeleteMapping("{courseId}/clearAssociation")
+    @DeleteMapping("/clearAssociation")
     public ResponseEntity<Map<String, String>> clearAssociation() {
         try {
             adminService.clearTeacherAndSectionsFromCourse();

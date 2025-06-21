@@ -231,8 +231,6 @@ public class StudentService {
         Student.Semester semester = new Student.Semester();
         semester.setNumber(currentSemesterNumber);
         semester.setCourses(new ArrayList<>());
-        semester.setSections(new ArrayList<>());
-        semester.setGpa(new ArrayList<>());
 
         List<CourseRegistration> registration = new ArrayList<>();
 
@@ -318,8 +316,6 @@ public class StudentService {
             newCourse.setDetails(null);
 
             semester.getCourses().add(newCourse);
-            semester.getSections().add(section.getId());
-            semester.getGpa().add(0.0);
 
             registration.add(registrationForm);
         }
