@@ -73,12 +73,6 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/allowRegistration")
-    public ResponseEntity<List<AdminService.CourseRegistrationInit>> allowCourseRegistration() {
-        List<AdminService.CourseRegistrationInit> result = adminService.allowCourseRegistration();
-        return ResponseEntity.ok(result);
-    }
-
     @DeleteMapping("/clearAssociation")
     public ResponseEntity<Map<String, String>> clearAssociation() {
         try {

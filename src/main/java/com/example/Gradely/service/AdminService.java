@@ -4,9 +4,11 @@ import com.example.Gradely.database.model.*;
 import com.example.Gradely.database.repository.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,14 +44,22 @@ public class AdminService {
         public String adminPassword;
     }
 
-    public static class CourseRegistrationInit {
+    @Getter
+    @Setter
+    public static class CourseRegistrationInit implements Serializable {
         public String courseId;
         public String courseCode;
         public String courseName;
         public String status;
         public String desc;
-        public List<String> teachers;
-        public List<String> sections;
+        public List<CourseParts> available;
+    }
+
+    @Getter
+    @Setter
+    public static class CourseParts implements Serializable {
+        public String teacher;
+        public String section;
     }
 
     public static class CourseRegistrationAdd {
@@ -104,12 +114,19 @@ public class AdminService {
             Set<String> sectionIds = new HashSet<>();
             Set<String> teacherIds = new HashSet<>();
 
+            List<CourseParts> parts = new ArrayList<>();
+
             for (Section section : courseSections) {
                 sectionIds.add(section.getId());
 
                 for (Section.Class cls : section.getClasses()) {
                     if (cls.getCourse().equals(course.getId()) && cls.getTeacher() != null) {
                         teacherIds.add(cls.getTeacher());
+
+                        CourseParts part = new CourseParts();
+                        part.setSection(section.getId());
+                        part.setTeacher(cls.getTeacher());
+                        parts.add(part);
                     }
                 }
             }
@@ -124,8 +141,7 @@ public class AdminService {
             dto.courseName = course.getCourseName();
             dto.status = course.getStatus();
             dto.desc = courseDescMap.get(course.getId());
-            dto.sections = new ArrayList<>(sectionIds);
-            dto.teachers = new ArrayList<>(teacherIds);
+            dto.setAvailable(parts);
 
             courseOptions.add(dto);
         }
@@ -135,14 +151,6 @@ public class AdminService {
         Registrations saved = registrationsRepository.save(registration);
 
         return saved.getId();
-    }
-
-    @Transactional
-    public List<CourseRegistrationInit> allowCourseRegistration() {
-
-        return registrationsRepository.findFirstByOrderByCreatedAtDesc()
-                .map(Registrations::getAvailableCourses)
-                .orElseThrow(() -> new RuntimeException("No registration options available"));
     }
 
     @Transactional

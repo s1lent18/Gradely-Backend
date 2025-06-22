@@ -1,20 +1,16 @@
 package com.example.Gradely.service;
 
-import com.example.Gradely.database.model.Course;
-import com.example.Gradely.database.model.Section;
-import com.example.Gradely.database.model.Student;
-import com.example.Gradely.database.model.Teacher;
-import com.example.Gradely.database.repository.CoursesRepository;
-import com.example.Gradely.database.repository.SectionRepository;
-import com.example.Gradely.database.repository.StudentsRepository;
-import com.example.Gradely.database.repository.TeachersRepository;
+import com.example.Gradely.database.model.*;
+import com.example.Gradely.database.repository.*;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,12 +22,20 @@ public class StudentService {
     private final CoursesRepository courseRepository;
     private final SectionRepository sectionRepository;
     private final TeachersRepository teachersRepository;
+    private final RegistrationsRepository registrationsRepository;
 
-    public StudentService(StudentsRepository studentsRepository, CoursesRepository courseRepository, SectionRepository sectionRepository, TeachersRepository teachersRepository) {
+    public StudentService(
+            StudentsRepository studentsRepository,
+            CoursesRepository courseRepository,
+            SectionRepository sectionRepository,
+            TeachersRepository teachersRepository,
+            RegistrationsRepository registrationsRepository
+    ) {
         this.studentsRepository = studentsRepository;
         this.courseRepository = courseRepository;
         this.sectionRepository = sectionRepository;
         this.teachersRepository = teachersRepository;
+        this.registrationsRepository = registrationsRepository;
     }
 
     public static class StudentRequest {
@@ -367,5 +371,42 @@ public class StudentService {
                 student.getCgpa(),
                 student.getSemesters()
         );
+    }
+
+    @Cacheable(value = "courseRegistration", key = "#studentId", unless = "#result == null")
+    public List<AdminService.CourseRegistrationInit> allowCourseRegistration(String studentId) {
+
+        List<AdminService.CourseRegistrationInit> availableCourses = registrationsRepository
+                .findFirstByOrderByCreatedAtDesc()
+                .map(Registrations::getAvailableCourses)
+                .orElseThrow(() -> new RuntimeException("No registration options available"));
+
+        Student student = studentsRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        Map<String, Double> courseGpaMap = new HashMap<>();
+        for (Student.Semester semester : student.getSemesters()) {
+            for (Student.Courses course : semester.getCourses()) {
+                if (course.getCourseId() != null) {
+                    courseGpaMap.put(course.getCourseId(), course.getGpa());
+                }
+            }
+        }
+
+        for (AdminService.CourseRegistrationInit course : availableCourses) {
+            Double gpa = courseGpaMap.get(course.courseId);
+
+            if (gpa != null) {
+                if (gpa == 4.0) {
+                    course.desc = "Don't Allow";
+                } else {
+                    course.desc = "Can Improve";
+                }
+            } else {
+                course.desc = "Recommended - In Line with RoadMap";
+            }
+        }
+
+        return availableCourses;
     }
 }

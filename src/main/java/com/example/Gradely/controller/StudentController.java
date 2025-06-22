@@ -1,8 +1,10 @@
 package com.example.Gradely.controller;
 
+import com.example.Gradely.service.AdminService;
 import com.example.Gradely.service.StudentService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -85,5 +87,19 @@ public class StudentController {
     public ResponseEntity<StudentService.StudentGetResponse> getStudent(@PathVariable String studentId) {
         StudentService.StudentGetResponse response = studentService.getStudent(studentId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{studentId}/allowRegistration")
+    public ResponseEntity<?> allowCourseRegistration(@PathVariable String studentId) {
+        try {
+            List<AdminService.CourseRegistrationInit> result = studentService.allowCourseRegistration(studentId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Error during allowCourseRegistration: " + e.getMessage());
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
     }
 }
