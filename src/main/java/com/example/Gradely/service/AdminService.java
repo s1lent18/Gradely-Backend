@@ -154,16 +154,16 @@ public class AdminService {
         List<PastRecords> pastRecords = new ArrayList<>();
 
         for (Course course : courses) {
-//            CourseStats stats = calculateStatsForCourse(course.getId());
-//
-//            List<PastRecords.Records> recordsList = getRecords(course, teachers, stats);
-//
-//            if (!recordsList.isEmpty()) {
-//                PastRecords past = new PastRecords();
-//                past.setCourseId(course.getId());
-//                past.setRecords(recordsList);
-//                pastRecords.add(past);
-//            }
+            CourseStats stats = calculateStatsForCourse(course.getId());
+
+            List<PastRecords.Records> recordsList = getRecords(course, teachers, stats);
+
+            if (!recordsList.isEmpty()) {
+                PastRecords past = new PastRecords();
+                past.setCourseId(course.getId());
+                past.setRecords(recordsList);
+                pastRecords.add(past);
+            }
 
             course.setTeachers(new ArrayList<>());
         }
