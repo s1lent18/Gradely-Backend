@@ -31,15 +31,6 @@ public class CoursesController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{courseId}/assign-teachers")
-    public ResponseEntity<String> assignTeachersToCourse(
-            @PathVariable String courseId,
-            @RequestBody TeacherAssignmentRequest request
-    ) {
-        coursesService.assignTeachersToCourse(courseId, request.teacherIds, request.sections);
-        return ResponseEntity.ok("Teachers assigned to course successfully");
-    }
-
     @GetMapping("/getWithTeachers")
     public ResponseEntity<List<CoursesService.CourseWithTeachersResponse>> getCoursesWithTeachers() {
         List<CoursesService.CourseWithTeachersResponse> response = coursesService.getAllCoursesWithTeachers();

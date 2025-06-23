@@ -2,27 +2,22 @@ package com.example.Gradely.service;
 
 import com.example.Gradely.database.model.Course;
 import com.example.Gradely.database.model.Department;
-import com.example.Gradely.database.model.Teacher;
 import com.example.Gradely.database.repository.CoursesRepository;
 import com.example.Gradely.database.repository.DepartmentsRepository;
-import com.example.Gradely.database.repository.TeachersRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CoursesService {
 
-    private final TeachersRepository teachersRepository;
     private final CoursesRepository coursesRepository;
     private final DepartmentsRepository departmentsRepository;
 
-    public CoursesService(CoursesRepository coursesRepository, DepartmentsRepository departmentsRepository, TeachersRepository teachersRepository) {
+    public CoursesService(CoursesRepository coursesRepository, DepartmentsRepository departmentsRepository) {
         this.coursesRepository = coursesRepository;
         this.departmentsRepository = departmentsRepository;
-        this.teachersRepository = teachersRepository;
     }
 
     public static class CourseWithTeachersResponse {
@@ -207,64 +202,5 @@ public class CoursesService {
             new CoursesService.CourseResponse.DepartmentInfo(dept.getId(), dept.getDepartmentName()),
             prereq != null ? new CourseResponse.PrerequisiteCourseInfo(prereq.getCourseCode(), prereq.getCourseName()) : null
         );
-    }
-
-    @Transactional
-    public void assignTeachersToCourse(String courseId, List<String> teacherIds, List<String> sections) {
-        Course course = coursesRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
-
-        List<Teacher> teachers = teachersRepository.findAllById(teacherIds);
-
-        if (teachers.size() != teacherIds.size()) {
-            throw new RuntimeException("One or more teachers not found");
-        }
-
-        List<Course.TeacherInfo> newTeacherInfos = new ArrayList<>();
-        Set<String> existingIds = course.getTeachers().stream()
-                .map(Course.TeacherInfo::getId)
-                .collect(Collectors.toSet());
-
-        Queue<String> sectionQueue = new LinkedList<>(sections);
-
-        for (Teacher teacher : teachers) {
-            String teacherId = teacher.getId();
-
-            if (existingIds.contains(teacherId)) continue;
-
-            List<String> assignedSections = new ArrayList<>();
-
-            if (sections.size() == teachers.size()) {
-                if (!sectionQueue.isEmpty()) {
-                    assignedSections.add(sectionQueue.poll());
-                }
-            } else {
-                if ("assistant professor".equalsIgnoreCase(teacher.getPosition())) {
-                    if (!sectionQueue.isEmpty()) assignedSections.add(sectionQueue.poll());
-                    if (!sectionQueue.isEmpty()) assignedSections.add(sectionQueue.poll());
-                } else {
-                    if (!sectionQueue.isEmpty()) assignedSections.add(sectionQueue.poll());
-                }
-            }
-
-            Course.TeacherInfo info = new Course.TeacherInfo(teacherId, teacher.getName(), teacher.getAssignedEmail(), assignedSections);
-            newTeacherInfos.add(info);
-
-            boolean alreadyAssigned = teacher.getCourses().stream()
-                    .anyMatch(c -> String.valueOf(c.getId()).equals(course.getId()));
-
-            if (!alreadyAssigned) {
-                teacher.getCourses().add(new Teacher.CourseInfo(
-                        course.getId(),
-                        0.0,
-                        "",
-                        ""
-                ));
-            }
-        }
-
-        course.getTeachers().addAll(newTeacherInfos);
-        coursesRepository.save(course);
-        teachersRepository.saveAll(teachers);
     }
 }

@@ -249,7 +249,7 @@ public class TeachersService {
                 .filter(sec -> sec.getName().equalsIgnoreCase(section.getName()))
                 .findFirst();
 
-        Teacher.CourseInfo courseInfo = new Teacher.CourseInfo(courseId, 0.0, "", "");
+        Teacher.CourseInfo courseInfo = new Teacher.CourseInfo(courseId, course.getCourseName(), 0.0, "", "", 0);
 
         if (teacherSectionOpt.isPresent()) {
             Teacher.Section teacherSection = teacherSectionOpt.get();

@@ -56,17 +56,21 @@ public class Teacher {
     @Data
     public static class CourseInfo {
         private String id;
+        private String name;
         private Double rating;
         private String worstRatedComment;
         private String bestRatedComment;
+        private Integer numberOfStudents;
 
         public CourseInfo() {}
 
-        public CourseInfo(String id, Double rating, String worstRatedComment, String bestRatedComment) {
+        public CourseInfo(String id, String name, Double rating, String worstRatedComment, String bestRatedComment, Integer numberOfStudents) {
             this.id = id;
+            this.name = name;
             this.rating = rating;
             this.worstRatedComment = worstRatedComment;
             this.bestRatedComment = bestRatedComment;
+            this.numberOfStudents = numberOfStudents;
         }
     }
 
