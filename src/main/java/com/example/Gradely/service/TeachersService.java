@@ -134,6 +134,7 @@ public class TeachersService {
             this.sections = sections;
             this.status = status;
             this.dob = dob;
+            this.hiringYear = hiringYear;
         }
     }
 
