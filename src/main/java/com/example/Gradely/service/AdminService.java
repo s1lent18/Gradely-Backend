@@ -58,8 +58,10 @@ public class AdminService {
     @Getter
     @Setter
     public static class CourseParts implements Serializable {
-        public String teacher;
-        public String section;
+        public String teacherId;
+        public String teacherName;
+        public String sectionId;
+        public String sectionName;
     }
 
     public static class CourseRegistrationAdd {
@@ -123,9 +125,13 @@ public class AdminService {
                     if (cls.getCourse().equals(course.getId()) && cls.getTeacher() != null) {
                         teacherIds.add(cls.getTeacher());
 
+                        Teacher teacher = teachersRepository.findById(cls.getTeacher()).orElseThrow(() -> new RuntimeException("Teacher not found"));
+
                         CourseParts part = new CourseParts();
-                        part.setSection(section.getId());
-                        part.setTeacher(cls.getTeacher());
+                        part.setSectionId(section.getId());
+                        part.setSectionName(section.getName());
+                        part.setTeacherId(cls.getTeacher());
+                        part.setTeacherName(teacher.getName());
                         parts.add(part);
                     }
                 }
