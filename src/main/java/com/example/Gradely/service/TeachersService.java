@@ -108,13 +108,16 @@ public class TeachersService {
         public String position;
         public List<String> qualification;
         public String gender;
+        public String status;
+        public String dob;
         public String assignedEmail;
         public List<Teacher.Section> sections;
         public TeachersService.TeachersResponse.DepartmentInfo department;
 
         public TeachersGetResponse(String teacherId, String teacherName, String bloodGroup, String address,
                                 String personalEmail, String phone, String emergency, String position, List<String> qualification,
-                                String gender, String assignedEmail, TeachersService.TeachersResponse.DepartmentInfo department, List<Teacher.Section> sections) {
+                                String gender, String assignedEmail, TeachersService.TeachersResponse.DepartmentInfo department,
+                                   List<Teacher.Section> sections, String status, String dob) {
             this.teacherId = teacherId;
             this.teacherName = teacherName;
             this.bloodGroup = bloodGroup;
@@ -128,6 +131,8 @@ public class TeachersService {
             this.assignedEmail = assignedEmail;
             this.department = department;
             this.sections = sections;
+            this.status = status;
+            this.dob = dob;
         }
     }
 
@@ -148,7 +153,9 @@ public class TeachersService {
                 teacher.getGender(),
                 teacher.getAssignedEmail(),
                 new TeachersResponse.DepartmentInfo(dept.getId(), dept.getDepartmentName()),
-                teacher.getSections()
+                teacher.getSections(),
+                teacher.getStatus(),
+                teacher.getDob()
         );
     }
 
