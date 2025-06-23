@@ -96,6 +96,62 @@ public class TeachersService {
         }
     }
 
+    public static class TeachersGetResponse {
+        public String token;
+        public String teacherId;
+        public String teacherName;
+        public String bloodGroup;
+        public String address;
+        public String personalEmail;
+        public String phone;
+        public String emergency;
+        public String position;
+        public List<String> qualification;
+        public String gender;
+        public String assignedEmail;
+        public List<Teacher.Section> sections;
+        public TeachersService.TeachersResponse.DepartmentInfo department;
+
+        public TeachersGetResponse(String teacherId, String teacherName, String bloodGroup, String address,
+                                String personalEmail, String phone, String emergency, String position, List<String> qualification,
+                                String gender, String assignedEmail, TeachersService.TeachersResponse.DepartmentInfo department, List<Teacher.Section> sections) {
+            this.teacherId = teacherId;
+            this.teacherName = teacherName;
+            this.bloodGroup = bloodGroup;
+            this.address = address;
+            this.personalEmail = personalEmail;
+            this.phone = phone;
+            this.emergency = emergency;
+            this.position = position;
+            this.qualification = qualification;
+            this.gender = gender;
+            this.assignedEmail = assignedEmail;
+            this.department = department;
+            this.sections = sections;
+        }
+    }
+
+    public TeachersGetResponse getTeacher(String assignedEmail) {
+        Teacher teacher = teachersRepository.findByAssignedEmail(assignedEmail).orElseThrow(() -> new RuntimeException("Teacher Not Found"));
+        Department dept = departmentsRepository.findById(teacher.getDepartmentId()).orElseThrow(() -> new RuntimeException("Department not found"));
+
+        return new TeachersGetResponse(
+                String.valueOf(teacher.getId()),
+                teacher.getName(),
+                teacher.getBloodGroup(),
+                teacher.getAddress(),
+                teacher.getPersonalEmail(),
+                teacher.getPhone(),
+                teacher.getEmergency(),
+                teacher.getPosition(),
+                teacher.getQualification(),
+                teacher.getGender(),
+                teacher.getAssignedEmail(),
+                new TeachersResponse.DepartmentInfo(dept.getId(), dept.getDepartmentName()),
+                teacher.getSections()
+        );
+    }
+
     @Transactional
     public TeachersService.TeachersResponse add(TeachersService.TeacherRequest body) {
         Department dept = departmentsRepository.findById(body.departmentId).orElseThrow(() -> new RuntimeException("Department not found"));
@@ -232,5 +288,4 @@ public class TeachersService {
 
         teachersRepository.saveAll(allTeachers);
     }
-
 }

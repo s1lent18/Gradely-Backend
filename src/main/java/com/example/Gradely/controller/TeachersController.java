@@ -47,22 +47,23 @@ public class TeachersController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody TeachersService.TeacherLoginRequest request) {
+    public ResponseEntity<Map<String, TeachersService.TeachersGetResponse>> login(@RequestBody TeachersService.TeacherLoginRequest request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-            String jwt = jwtUtil.generateToken(userDetails);
 
-            Map<String, String> response = new HashMap<>();
-            response.put("token", jwt);
+            TeachersService.TeachersGetResponse getResponse = teachersService.getTeacher(request.email);
+            getResponse.token = jwtUtil.generateToken(userDetails);
+
+            Map<String, TeachersService.TeachersGetResponse> response = new HashMap<>();
+            response.put("teacherData", getResponse);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("msg", "Invalid Email or Password ");
+            Map<String, TeachersService.TeachersGetResponse> response = new HashMap<>();
             return ResponseEntity.badRequest().body(response);
         }
     }
