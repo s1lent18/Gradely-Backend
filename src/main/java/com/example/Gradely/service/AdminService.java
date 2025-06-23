@@ -4,7 +4,6 @@ import com.example.Gradely.database.model.*;
 import com.example.Gradely.database.repository.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
