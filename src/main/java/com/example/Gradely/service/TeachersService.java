@@ -110,6 +110,7 @@ public class TeachersService {
         public String gender;
         public String status;
         public String dob;
+        public String hiringYear;
         public String assignedEmail;
         public List<Teacher.Section> sections;
         public TeachersService.TeachersResponse.DepartmentInfo department;
@@ -117,7 +118,7 @@ public class TeachersService {
         public TeachersGetResponse(String teacherId, String teacherName, String bloodGroup, String address,
                                 String personalEmail, String phone, String emergency, String position, List<String> qualification,
                                 String gender, String assignedEmail, TeachersService.TeachersResponse.DepartmentInfo department,
-                                   List<Teacher.Section> sections, String status, String dob) {
+                                   List<Teacher.Section> sections, String status, String dob, String hiringYear) {
             this.teacherId = teacherId;
             this.teacherName = teacherName;
             this.bloodGroup = bloodGroup;
@@ -155,7 +156,8 @@ public class TeachersService {
                 new TeachersResponse.DepartmentInfo(dept.getId(), dept.getDepartmentName()),
                 teacher.getSections(),
                 teacher.getStatus(),
-                teacher.getDob()
+                teacher.getDob(),
+                teacher.getHiringYear()
         );
     }
 
