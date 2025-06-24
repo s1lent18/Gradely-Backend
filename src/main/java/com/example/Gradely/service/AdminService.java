@@ -51,6 +51,7 @@ public class AdminService {
         public String courseName;
         public String status;
         public String desc;
+        public Integer creditHours;
         public List<CourseParts> available;
     }
 
@@ -146,6 +147,7 @@ public class AdminService {
             dto.courseName = course.getCourseName();
             dto.status = course.getStatus();
             dto.desc = courseDescMap.get(course.getId());
+            dto.creditHours = course.getCreditHours();
             dto.setAvailable(parts);
 
             courseOptions.add(dto);
