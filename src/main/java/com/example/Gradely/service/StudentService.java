@@ -243,7 +243,6 @@ public class StudentService {
             Section section = sectionMap.get(req.sectionId);
             Teacher teacher = teacherMap.get(req.teacherId);
 
-            // Check pre-req
             PreReqResult preReq = null;
             if (course.getPreReqCode() != null) {
                 Course preReqCourse = courseRepository.findByCourseCode(course.getPreReqCode()).orElse(null);
@@ -274,7 +273,6 @@ public class StudentService {
                             + ". Prerequisite " + preReqCourse.getCourseCode() + " has not been completed.");
                 }
 
-                // ✅ Set preReqResult
                 preReq = new PreReqResult();
                 preReq.courseCode = preReqCourse.getCourseCode();
                 preReq.courseName = preReqCourse.getCourseName();
@@ -283,7 +281,6 @@ public class StudentService {
                 preReq.gpa = foundGpa != null ? foundGpa : 0.0;
             }
 
-            // Register the student in the class
             Section.Class matchingClass = getAClass(section, course, teacher);
 
             if (matchingClass.getStudentAttendance() == null) {
@@ -300,7 +297,6 @@ public class StudentService {
                 matchingClass.getStudentAttendance().add(sa);
             }
 
-            // Create registration form
             CourseRegistration registrationForm = new CourseRegistration();
             registrationForm.courseCode = course.getCourseCode();
             registrationForm.courseName = course.getCourseName();
@@ -312,7 +308,6 @@ public class StudentService {
 
             sectionRepository.save(section);
 
-            // Add to student semester
             Student.Courses newCourse = new Student.Courses();
             newCourse.setCourseId(course.getId());
             newCourse.setSection(section.getId());

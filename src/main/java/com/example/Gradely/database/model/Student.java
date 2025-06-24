@@ -68,14 +68,31 @@ public class Student {
     public static class Course {
         private String courseCode;
         private String name;
-        private List<List<String>> assignments;
-        private List<List<String>> quizzes;
-        private List<String> mid1;
-        private List<String> mid2;
-        private List<String> project;
-        private List<String> classParticipation;
-        private List<String> finalExam;
+        private List<Assignment> assignments;
+        private List<Quiz> quizzes;
+        private String mid1Score;
+        private String mid1Total;
+        private String mid2Score;
+        private String mid2Total;
+        private String projectScore;
+        private String projectTotal;
+        private String classParticipationScore;
+        private String classParticipationTotal;
+        private String finalExamScore;
+        private String finalExamTotal;
         private List<Attendance> attendance;
+    }
+
+    @Data
+    public static class Quiz {
+        private String quizScore;
+        private String quizTotal;
+    }
+
+    @Data
+    public static class Assignment {
+        private String assignmentScore;
+        private String assignmentTotal;
     }
 
     public Student() {}

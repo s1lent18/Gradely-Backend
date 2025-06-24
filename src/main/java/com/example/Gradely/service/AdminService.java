@@ -92,7 +92,6 @@ public class AdminService {
         }
 
         List<Section> allSections = sectionRepository.findAll();
-
         Map<String, List<Section>> sectionByCourse = new HashMap<>();
 
         for (Section section : allSections) {
@@ -117,6 +116,7 @@ public class AdminService {
             Set<String> teacherIds = new HashSet<>();
 
             List<CourseParts> parts = new ArrayList<>();
+            Map<String, Course.TeacherInfo> teacherInfoMap = new HashMap<>();
 
             for (Section section : courseSections) {
                 sectionIds.add(section.getId());
@@ -126,6 +126,13 @@ public class AdminService {
                         teacherIds.add(cls.getTeacher());
 
                         Teacher teacher = teachersRepository.findById(cls.getTeacher()).orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+                        teacherInfoMap.computeIfAbsent(cls.getTeacher(), tid -> new Course.TeacherInfo(
+                                teacher.getId(),
+                                teacher.getName(),
+                                teacher.getAssignedEmail(),
+                                new ArrayList<>()
+                        )).getSections().add(section.getId());
 
                         CourseParts part = new CourseParts();
                         part.setSectionId(section.getId());
@@ -140,6 +147,9 @@ public class AdminService {
             if (sectionIds.isEmpty() || teacherIds.isEmpty()) {
                 throw new RuntimeException("Course [" + course.getCourseCode() + "] is not associated with any section or teacher.");
             }
+
+            course.setTeachers(new ArrayList<>(teacherInfoMap.values()));
+            coursesRepository.save(course);
 
             CourseRegistrationInit dto = new CourseRegistrationInit();
             dto.courseId = course.getId();
