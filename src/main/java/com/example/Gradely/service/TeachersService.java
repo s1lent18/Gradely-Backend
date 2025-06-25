@@ -347,14 +347,23 @@ public class TeachersService {
         teachersRepository.findById(teacherId).orElseThrow(() -> new RuntimeException("Teacher Not Found"));
 
         List<String> studentIds = markings.stream().map(r -> r.studentId).toList();
+        List<String> courseIds = markings.stream().map(r -> r.courseId).toList();
         Map<String, TeacherMarkingRequest> markingMap = markings.stream()
                 .collect(Collectors.toMap(r -> r.studentId + "_" + r.courseId, r -> r));
 
         List<Student> students = studentsRepository.findAllById(studentIds);
+        List<Course> courses = coursesRepository.findAllById(courseIds);
 
         if (students.size() != studentIds.size()) {
             throw new RuntimeException("Some student IDs are invalid");
         }
+
+        if (courses.size() != courseIds.size()) {
+            throw new RuntimeException("Some course IDs are invalid");
+        }
+
+        Map<String, Course> courseMap = courses.stream()
+                .collect(Collectors.toMap(Course::getId, c -> c));
 
         for (Student student : students) {
             for (Student.Semester semester : student.getSemesters()) {
@@ -367,7 +376,10 @@ public class TeachersService {
                     Student.Course details = course.getDetails();
 
                     if (details == null) {
-                        details = new Student.Course();
+                        Course externalCourse = courseMap.get(course.getCourseId());
+                        if (externalCourse == null) throw new RuntimeException("Course not found: " + course.getCourseId());
+
+                        details = new Student.Course(externalCourse.getCourseCode(), externalCourse.getCourseName());
                         course.setDetails(details);
                     }
 

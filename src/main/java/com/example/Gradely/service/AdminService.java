@@ -318,5 +318,4 @@ public class AdminService {
             return 0.0;
         }
     }
-
 }

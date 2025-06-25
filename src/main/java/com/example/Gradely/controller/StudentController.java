@@ -1,5 +1,6 @@
 package com.example.Gradely.controller;
 
+import com.example.Gradely.database.model.Student;
 import com.example.Gradely.service.AdminService;
 import com.example.Gradely.service.StudentService;
 import com.example.Gradely.utils.JwtUtil;
@@ -101,5 +102,13 @@ public class StudentController {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/{studentId}/getSemesters")
+    public ResponseEntity<?> getSemesters(@PathVariable String studentId) {
+        Map<String, List<Student.Semester>> response = new HashMap<>();
+        List<Student.Semester> list = studentService.getSemesters(studentId);
+        response.put("semesters", list);
+        return ResponseEntity.ok(response);
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -81,18 +82,46 @@ public class Student {
         private String finalExamScore;
         private String finalExamTotal;
         private List<Attendance> attendance;
+
+        public Course(String courseCode, String name) {
+            this.courseCode = courseCode;
+            this.name = name;
+            this.assignments = new ArrayList<>();
+            this.quizzes = new ArrayList<>();
+            this.mid1Score = "?";
+            this.mid1Total = "?";
+            this.mid2Score = "?";
+            this.mid2Total = "?";
+            this.classParticipationScore = "?";
+            this.classParticipationTotal = "?";
+            this.projectScore = "?";
+            this.projectTotal = "?";
+            this.finalExamScore = "?";
+            this.finalExamTotal = "?";
+            this.attendance = new ArrayList<>();
+        }
     }
 
     @Data
     public static class Quiz {
         private String quizScore;
         private String quizTotal;
+
+        public Quiz() {
+            this.quizScore = "?";
+            this.quizTotal = "?";
+        }
     }
 
     @Data
     public static class Assignment {
         private String assignmentScore;
         private String assignmentTotal;
+
+        public Assignment() {
+            this.assignmentScore = "?";
+            this.assignmentTotal = "?";
+        }
     }
 
     public Student() {}

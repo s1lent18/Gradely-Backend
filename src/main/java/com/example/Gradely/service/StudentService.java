@@ -9,10 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -243,6 +240,17 @@ public class StudentService {
             Section section = sectionMap.get(req.sectionId);
             Teacher teacher = teacherMap.get(req.teacherId);
 
+            boolean alreadyRegistered = student.getSemesters() != null &&
+                    student.getSemesters().stream()
+                            .flatMap(s -> s.getCourses().stream())
+                            .anyMatch(c -> c.getCourseId().equals(req.courseId));
+
+            if (alreadyRegistered) {
+                throw new RuntimeException("Already registered for course: " + course.getCourseCode());
+            }
+
+            //List<Course.TeacherInfo> teacherInfos = course.getTeachers();
+
             PreReqResult preReq = null;
             if (course.getPreReqCode() != null) {
                 Course preReqCourse = courseRepository.findByCourseCode(course.getPreReqCode()).orElse(null);
@@ -304,18 +312,47 @@ public class StudentService {
             registrationForm.status = course.getStatus();
             registrationForm.section = section.getId();
             registrationForm.teacher = teacher.getId();
-            registrationForm.preReqResult = preReq; 
+            registrationForm.preReqResult = preReq;
+
+            List<Course.TeacherInfo> teacherInfos = course.getTeachers();
+            if (teacherInfos == null) {
+                teacherInfos = new ArrayList<>();
+                course.setTeachers(teacherInfos);
+            }
+
+            boolean teacherInfoExists = false;
+            for (Course.TeacherInfo teacherInfo : teacherInfos) {
+                if (Objects.equals(teacherInfo.getId(), teacher.getId())) {
+                    teacherInfoExists = true;
+                    if (!teacherInfo.getSections().contains(section.getId())) {
+                        teacherInfo.getSections().add(section.getId());
+                    }
+                    break;
+                }
+            }
+
+            if (!teacherInfoExists) {
+                Course.TeacherInfo info = new Course.TeacherInfo();
+                info.setId(teacher.getId());
+                info.setName(teacher.getName());
+                info.setAssignedEmail(teacher.getAssignedEmail());
+                List<String> sectionList = new ArrayList<>();
+                sectionList.add(section.getId());
+                info.setSections(sectionList);
+                teacherInfos.add(info);
+            }
 
             sectionRepository.save(section);
+            courseRepository.save(course);
 
+            // Add to student's semester
             Student.Courses newCourse = new Student.Courses();
             newCourse.setCourseId(course.getId());
             newCourse.setSection(section.getId());
             newCourse.setGpa(0.0);
-            newCourse.setDetails(null);
+            newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName()));
 
             semester.getCourses().add(newCourse);
-
             registration.add(registrationForm);
         }
 
@@ -403,5 +440,11 @@ public class StudentService {
         }
 
         return availableCourses;
+    }
+
+    public List<Student.Semester> getSemesters(String studentId) {
+        Student student = studentsRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student Not Found"));
+
+        return student.getSemesters();
     }
 }
