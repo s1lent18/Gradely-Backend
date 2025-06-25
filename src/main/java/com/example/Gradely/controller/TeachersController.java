@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -86,6 +87,20 @@ public class TeachersController {
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "All courses have been removed from all teachers.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{teacherId}/markStudents")
+    @PreAuthorize("hasAuthority('TEACHER')")
+    public ResponseEntity<Map<String, List<TeachersService.TeacherMarkingRequest>>> markStudents(
+            @PathVariable String teacherId,
+            @RequestBody List<TeachersService.TeacherMarkingRequest> request
+    ) {
+        List<TeachersService.TeacherMarkingRequest> requests = teachersService.markStudents(teacherId, request);
+
+        Map<String, List<TeachersService.TeacherMarkingRequest>> response = new HashMap<>();
+        response.put("markings", requests);
 
         return ResponseEntity.ok(response);
     }

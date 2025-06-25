@@ -1,35 +1,39 @@
 package com.example.Gradely.service;
 
-import com.example.Gradely.database.model.Course;
-import com.example.Gradely.database.model.Department;
-import com.example.Gradely.database.model.Section;
-import com.example.Gradely.database.model.Teacher;
-import com.example.Gradely.database.repository.CoursesRepository;
-import com.example.Gradely.database.repository.DepartmentsRepository;
-import com.example.Gradely.database.repository.SectionRepository;
-import com.example.Gradely.database.repository.TeachersRepository;
+import com.example.Gradely.database.model.*;
+import com.example.Gradely.database.repository.*;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TeachersService {
 
+    private final StudentsRepository studentsRepository;
     private final TeachersRepository teachersRepository;
     private final DepartmentsRepository departmentsRepository;
     private final CoursesRepository coursesRepository;
     private final PasswordEncoder passwordEncoder;
     private final SectionRepository sectionRepository;
 
-    public TeachersService(TeachersRepository teachersRepository, DepartmentsRepository departmentsRepository, CoursesRepository coursesRepository, PasswordEncoder passwordEncoder, SectionRepository sectionRepository) {
+    public TeachersService(TeachersRepository teachersRepository,
+                           DepartmentsRepository departmentsRepository,
+                           CoursesRepository coursesRepository,
+                           PasswordEncoder passwordEncoder,
+                           SectionRepository sectionRepository,
+                           StudentsRepository studentsRepository
+    ) {
         this.teachersRepository = teachersRepository;
         this.departmentsRepository = departmentsRepository;
         this.coursesRepository = coursesRepository;
         this.passwordEncoder = passwordEncoder;
         this.sectionRepository = sectionRepository;
+        this.studentsRepository = studentsRepository;
     }
 
     public static class TeacherRequest {
@@ -49,7 +53,46 @@ public class TeachersService {
     public static class TeacherLoginRequest {
         public String email;
         public String password;
+    }
 
+    @Getter @Setter
+    public static class TeacherMarkingRequest {
+        public String studentId;
+        public String courseId;
+        public TeacherMarking marking;
+    }
+
+    @Getter @Setter
+    public static class TeacherMarking {
+        public List<Student.Assignment> assignments;
+        public List<Student.Quiz> quizzes;
+        public String mid1Score;
+        public String mid1Total;
+        public String mid2Score;
+        public String mid2Total;
+        public String projectScore;
+        public String projectTotal;
+        public String classParticipationScore;
+        public String classParticipationTotal;
+        public String finalExamScore;
+        public String finalExamTotal;
+
+        public TeacherMarking(List<Student.Assignment> assignments, List<Student.Quiz> quizzes, String mid1Score, String mid1Total,
+                              String mid2Score, String mid2Total, String projectScore, String projectTotal, String classParticipationScore, String classParticipationTotal, String finalExamScore, String finalExamTotal
+        ) {
+            this.assignments = assignments;
+            this.quizzes = quizzes;
+            this.mid1Score = mid1Score;
+            this.mid1Total = mid1Total;
+            this.mid2Score = mid2Score;
+            this.mid2Total = mid2Total;
+            this.projectScore = projectScore;
+            this.projectTotal = projectTotal;
+            this.classParticipationScore = classParticipationScore;
+            this.classParticipationTotal = classParticipationTotal;
+            this.finalExamScore = finalExamScore;
+            this.finalExamTotal = finalExamTotal;
+        }
     }
 
     public static class TeachersResponse {
@@ -297,5 +340,54 @@ public class TeachersService {
         }
 
         teachersRepository.saveAll(allTeachers);
+    }
+
+    @Transactional
+    public List<TeacherMarkingRequest> markStudents(String teacherId, List<TeacherMarkingRequest> markings) {
+        teachersRepository.findById(teacherId).orElseThrow(() -> new RuntimeException("Teacher Not Found"));
+
+        List<String> studentIds = markings.stream().map(r -> r.studentId).toList();
+        Map<String, TeacherMarkingRequest> markingMap = markings.stream()
+                .collect(Collectors.toMap(r -> r.studentId + "_" + r.courseId, r -> r));
+
+        List<Student> students = studentsRepository.findAllById(studentIds);
+
+        if (students.size() != studentIds.size()) {
+            throw new RuntimeException("Some student IDs are invalid");
+        }
+
+        for (Student student : students) {
+            for (Student.Semester semester : student.getSemesters()) {
+                for (Student.Courses course : semester.getCourses()) {
+                    String key = student.getId() + "_" + course.getCourseId();
+                    if (!markingMap.containsKey(key)) continue;
+
+                    TeacherMarkingRequest request = markingMap.get(key);
+                    TeacherMarking marking = request.getMarking();
+                    Student.Course details = course.getDetails();
+
+                    if (details == null) {
+                        details = new Student.Course();
+                        course.setDetails(details);
+                    }
+
+                    details.setAssignments(marking.getAssignments());
+                    details.setQuizzes(marking.getQuizzes());
+                    details.setMid1Score(marking.getMid1Score());
+                    details.setMid1Total(marking.getMid1Total());
+                    details.setMid2Score(marking.getMid2Score());
+                    details.setMid2Total(marking.getMid2Total());
+                    details.setProjectScore(marking.getProjectScore());
+                    details.setProjectTotal(marking.getProjectTotal());
+                    details.setClassParticipationScore(marking.getClassParticipationScore());
+                    details.setClassParticipationTotal(marking.getClassParticipationTotal());
+                    details.setFinalExamScore(marking.getFinalExamScore());
+                    details.setFinalExamTotal(marking.getFinalExamTotal());
+                }
+            }
+        }
+
+        studentsRepository.saveAll(students);
+        return markings;
     }
 }
