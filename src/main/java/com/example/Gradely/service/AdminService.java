@@ -251,13 +251,13 @@ public class AdminService {
                         if (details != null) {
                             double score = 0;
 
-                            score += sumList(details.getMid1());
-                            score += sumList(details.getMid2());
-                            score += sumList(details.getFinalExam());
-                            score += sumList(details.getClassParticipation());
-                            score += sumNestedList(details.getAssignments());
-                            score += sumNestedList(details.getQuizzes());
-                            score += sumList(details.getProject());
+                            score += Integer.parseInt(details.getMid1Score());
+                            score += Integer.parseInt(details.getMid2Score());
+                            score += Integer.parseInt(details.getFinalExamScore());
+                            score += Integer.parseInt(details.getProjectScore());
+                            score += Integer.parseInt(details.getClassParticipationScore());
+                            score += sumAssignments(details.getAssignments());
+                            score += sumQuizzes(details.getQuizzes());
 
                             totalScores.add(score);
                         }
@@ -282,22 +282,6 @@ public class AdminService {
         return stats;
     }
 
-    private double sumList(List<String> list) {
-        if (list == null) return 0;
-        return list.stream().mapToDouble(s -> {
-            try {
-                return Double.parseDouble(s);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }).sum();
-    }
-
-    private double sumNestedList(List<List<String>> nestedList) {
-        if (nestedList == null) return 0;
-        return nestedList.stream().mapToDouble(this::sumList).sum();
-    }
-
     private String calculateGrade(double score) {
         if (score >= 90) return "A+";
         if (score >= 86) return "A";
@@ -312,4 +296,27 @@ public class AdminService {
         if (score >= 50) return "D";
         return "F";
     }
+
+    private double sumAssignments(List<Student.Assignment> assignments) {
+        if (assignments == null) return 0.0;
+        return assignments.stream()
+                .mapToDouble(a -> parseDoubleSafe(a.getAssignmentScore()))
+                .sum();
+    }
+
+    private double sumQuizzes(List<Student.Quiz> quizzes) {
+        if (quizzes == null) return 0.0;
+        return quizzes.stream()
+                .mapToDouble(q -> parseDoubleSafe(q.getQuizScore()))
+                .sum();
+    }
+
+    private double parseDoubleSafe(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
 }
