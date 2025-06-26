@@ -15,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -93,13 +92,13 @@ public class TeachersController {
 
     @PostMapping("/{teacherId}/markStudents")
     @PreAuthorize("hasAuthority('TEACHER')")
-    public ResponseEntity<Map<String, List<TeachersService.TeacherMarkingRequest>>> markStudents(
+    public ResponseEntity<Map<String, TeachersService.TeacherMarkingRequest>> markStudents(
             @PathVariable String teacherId,
-            @RequestBody List<TeachersService.TeacherMarkingRequest> request
+            @RequestBody TeachersService.TeacherMarkingRequest request
     ) {
-        List<TeachersService.TeacherMarkingRequest> requests = teachersService.markStudents(teacherId, request);
+        TeachersService.TeacherMarkingRequest requests = teachersService.markStudents(teacherId, request);
 
-        Map<String, List<TeachersService.TeacherMarkingRequest>> response = new HashMap<>();
+        Map<String, TeachersService.TeacherMarkingRequest> response = new HashMap<>();
         response.put("markings", requests);
 
         return ResponseEntity.ok(response);

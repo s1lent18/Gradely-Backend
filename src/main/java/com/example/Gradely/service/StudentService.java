@@ -395,6 +395,7 @@ public class StudentService {
             newCourse.setCourseId(course.getId());
             newCourse.setSection(sections.getId());
             newCourse.setGpa(0.0);
+            newCourse.setGrade("");
             newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName()));
 
             semester.getCourses().add(newCourse);

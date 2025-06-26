@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class TeachersService {
@@ -56,10 +55,16 @@ public class TeachersService {
     }
 
     @Getter @Setter
-    public static class TeacherMarkingRequest {
+    public static class TeacherMarkingStudent {
         public String studentId;
-        public String courseId;
         public TeacherMarking marking;
+    }
+
+    @Getter @Setter
+    public static class TeacherMarkingRequest {
+        public String courseId;
+        public String sectionId;
+        public List<TeacherMarkingStudent> markingStudents;
     }
 
     @Getter @Setter
@@ -343,63 +348,125 @@ public class TeachersService {
     }
 
     @Transactional
-    public List<TeacherMarkingRequest> markStudents(String teacherId, List<TeacherMarkingRequest> markings) {
-        teachersRepository.findById(teacherId).orElseThrow(() -> new RuntimeException("Teacher Not Found"));
+    public TeacherMarkingRequest markStudents(String teacherId, TeacherMarkingRequest marking) {
+        teachersRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Teacher Not Found"));
 
-        List<String> studentIds = markings.stream().map(r -> r.studentId).toList();
-        List<String> courseIds = markings.stream().map(r -> r.courseId).toList();
-        Map<String, TeacherMarkingRequest> markingMap = markings.stream()
-                .collect(Collectors.toMap(r -> r.studentId + "_" + r.courseId, r -> r));
+        List<String> studentIds = marking.getMarkingStudents().stream()
+                .map(TeacherMarkingStudent::getStudentId).toList();
 
         List<Student> students = studentsRepository.findAllById(studentIds);
-        List<Course> courses = coursesRepository.findAllById(courseIds);
-
         if (students.size() != studentIds.size()) {
             throw new RuntimeException("Some student IDs are invalid");
         }
 
-        if (courses.size() != courseIds.size()) {
-            throw new RuntimeException("Some course IDs are invalid");
-        }
+        Course course = coursesRepository.findById(marking.getCourseId())
+                .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        Map<String, Course> courseMap = courses.stream()
-                .collect(Collectors.toMap(Course::getId, c -> c));
+        for (TeacherMarkingStudent mStudent : marking.getMarkingStudents()) {
+            String studentId = mStudent.getStudentId();
+            TeacherMarking mark = mStudent.getMarking();
 
-        for (Student student : students) {
+            Student student = students.stream()
+                    .filter(s -> s.getId().equals(studentId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Student not found in list"));
+
             for (Student.Semester semester : student.getSemesters()) {
-                for (Student.Courses course : semester.getCourses()) {
-                    String key = student.getId() + "_" + course.getCourseId();
-                    if (!markingMap.containsKey(key)) continue;
+                for (Student.Courses courseEntry : semester.getCourses()) {
+                    if (!courseEntry.getCourseId().equals(marking.getCourseId())) continue;
 
-                    TeacherMarkingRequest request = markingMap.get(key);
-                    TeacherMarking marking = request.getMarking();
-                    Student.Course details = course.getDetails();
-
+                    Student.Course details = courseEntry.getDetails();
                     if (details == null) {
-                        Course externalCourse = courseMap.get(course.getCourseId());
-                        if (externalCourse == null) throw new RuntimeException("Course not found: " + course.getCourseId());
-
-                        details = new Student.Course(externalCourse.getCourseCode(), externalCourse.getCourseName());
-                        course.setDetails(details);
+                        details = new Student.Course(course.getCourseCode(), course.getCourseName());
+                        courseEntry.setDetails(details);
                     }
 
-                    details.setAssignments(marking.getAssignments());
-                    details.setQuizzes(marking.getQuizzes());
-                    details.setMid1Score(marking.getMid1Score());
-                    details.setMid1Total(marking.getMid1Total());
-                    details.setMid2Score(marking.getMid2Score());
-                    details.setMid2Total(marking.getMid2Total());
-                    details.setProjectScore(marking.getProjectScore());
-                    details.setProjectTotal(marking.getProjectTotal());
-                    details.setClassParticipationScore(marking.getClassParticipationScore());
-                    details.setClassParticipationTotal(marking.getClassParticipationTotal());
-                    details.setFinalExamScore(marking.getFinalExamScore());
-                    details.setFinalExamTotal(marking.getFinalExamTotal());
+                    details.setAssignments(mark.getAssignments());
+                    details.setQuizzes(mark.getQuizzes());
+                    details.setMid1Score(mark.getMid1Score());
+                    details.setMid1Total(mark.getMid1Total());
+                    details.setMid2Score(mark.getMid2Score());
+                    details.setMid2Total(mark.getMid2Total());
+                    details.setProjectScore(mark.getProjectScore());
+                    details.setProjectTotal(mark.getProjectTotal());
+                    details.setClassParticipationScore(mark.getClassParticipationScore());
+                    details.setClassParticipationTotal(mark.getClassParticipationTotal());
+                    details.setFinalExamScore(mark.getFinalExamScore());
+                    details.setFinalExamTotal(mark.getFinalExamTotal());
+
+                    double total = getTotal(details);
+                    double sum = getSum(details);
+                    double gpa =
+                            (sum >= 86) ? 4.00 :
+                            (sum >= 82) ? 3.67 :
+                            (sum >= 78) ? 3.33 :
+                            (sum >= 74) ? 3.00 :
+                            (sum >= 70) ? 2.67 :
+                            (sum >= 66) ? 2.33 :
+                            (sum >= 62) ? 2.00 :
+                            (sum >= 58) ? 1.67 :
+                            (sum >= 54) ? 1.33 :
+                            (sum >= 50) ? 1.00 :
+                            0.00;
+
+                    String grade =
+                            (sum >= 90) ? "A+":
+                            (sum >= 86) ? "A" :
+                            (sum >= 82) ? "A-" :
+                            (sum >= 78) ? "B+" :
+                            (sum >= 74) ? "B" :
+                            (sum >= 70) ? "B-" :
+                            (sum >= 66) ? "C+" :
+                            (sum >= 62) ? "C" :
+                            (sum >= 58) ? "C-" :
+                            (sum >= 54) ? "D+" :
+                            (sum >= 50) ? "D" :
+                            "F";
+
+                    if (total == 100) {
+                        courseEntry.setGpa(gpa);
+                        courseEntry.setGrade(grade);
+                    }
                 }
             }
         }
 
         studentsRepository.saveAll(students);
-        return markings;
+        return marking;
+    }
+
+    private static double getTotal(Student.Course details) {
+        double summ = 0.0;
+
+        for (Student.Assignment assignment : details.getAssignments()) {
+            summ += Double.parseDouble(assignment.getAssignmentTotal());
+        }
+        for (Student.Quiz quiz : details.getQuizzes()) {
+            summ += Double.parseDouble(quiz.getQuizTotal());
+        }
+        summ += Double.parseDouble(details.getMid1Total());
+        summ += Double.parseDouble(details.getClassParticipationTotal());
+        summ += Double.parseDouble(details.getProjectTotal());
+        summ += Double.parseDouble(details.getMid2Total());
+        summ += Double.parseDouble(details.getFinalExamTotal());
+        return summ;
+    }
+
+    private static double getSum(Student.Course details) {
+        double summ = 0.0;
+
+        for (Student.Assignment assignment : details.getAssignments()) {
+            summ += Double.parseDouble(assignment.getAssignmentScore());
+        }
+        for (Student.Quiz quiz : details.getQuizzes()) {
+            summ += Double.parseDouble(quiz.getQuizScore());
+        }
+        summ += Double.parseDouble(details.getMid1Score());
+        summ += Double.parseDouble(details.getClassParticipationScore());
+        summ += Double.parseDouble(details.getProjectScore());
+        summ += Double.parseDouble(details.getMid2Score());
+        summ += Double.parseDouble(details.getFinalExamScore());
+        return summ;
     }
 }

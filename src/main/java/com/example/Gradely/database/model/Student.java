@@ -62,6 +62,7 @@ public class Student {
         private String courseId;
         private String section;
         private Double gpa;
+        private String grade;
         private Course details;
     }
 
