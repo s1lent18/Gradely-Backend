@@ -1,6 +1,6 @@
 package com.example.Gradely.controller;
 
-import com.example.Gradely.database.model.Section;
+import com.example.Gradely.database.model.Sections;
 import com.example.Gradely.service.TeachersService;
 import com.example.Gradely.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +71,7 @@ public class TeachersController {
 
     @PostMapping("/{teacherId}/assign-courses")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Section> assignCourses(
+    public ResponseEntity<Sections> assignCourses(
         @PathVariable String teacherId,
         @RequestBody CourseAssignmentRequest request
     ) {

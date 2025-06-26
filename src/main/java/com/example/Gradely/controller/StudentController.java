@@ -111,4 +111,12 @@ public class StudentController {
         response.put("semesters", list);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/getAllResults")
+    public ResponseEntity<?> getAllResults (@RequestBody StudentService.StudentAllResultRequest request) {
+        Map<String, List<StudentService.Details>> response = new HashMap<>();
+        List<StudentService.Details> list = studentService.getAllResults(request);
+        response.put("allResults", list);
+        return ResponseEntity.ok(response);
+    }
 }

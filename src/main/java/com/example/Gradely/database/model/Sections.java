@@ -9,7 +9,7 @@ import java.util.Map;
 
 @Data
 @Document(collection = "sections")
-public class Section {
+public class Sections {
 
     @Id
     private String id;
@@ -44,9 +44,9 @@ public class Section {
         private List<Map<String, String>> status;
     }
 
-    public Section() {}
+    public Sections() {}
 
-    public Section(String name, List<Class> classes) {
+    public Sections(String name, List<Class> classes) {
         this.name = name;
         this.classes = classes;
     }

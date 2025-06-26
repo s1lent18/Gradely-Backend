@@ -91,17 +91,17 @@ public class AdminService {
             throw new RuntimeException("Some course IDs are invalid");
         }
 
-        List<Section> allSections = sectionRepository.findAll();
-        Map<String, List<Section>> sectionByCourse = new HashMap<>();
+        List<Sections> allSections = sectionRepository.findAll();
+        Map<String, List<Sections>> sectionByCourse = new HashMap<>();
 
-        for (Section section : allSections) {
-            if (section.getClasses() == null) continue;
+        for (Sections sections : allSections) {
+            if (sections.getClasses() == null) continue;
 
-            for (Section.Class cls : section.getClasses()) {
+            for (Sections.Class cls : sections.getClasses()) {
                 if (cls.getCourse() != null && courseIds.contains(cls.getCourse())) {
                     sectionByCourse
                             .computeIfAbsent(cls.getCourse(), k -> new ArrayList<>())
-                            .add(section);
+                            .add(sections);
                     break;
                 }
             }
@@ -110,7 +110,7 @@ public class AdminService {
         List<CourseRegistrationInit> courseOptions = new ArrayList<>();
 
         for (Course course : courses) {
-            List<Section> courseSections = sectionByCourse.getOrDefault(course.getId(), Collections.emptyList());
+            List<Sections> courseSections = sectionByCourse.getOrDefault(course.getId(), Collections.emptyList());
 
             Set<String> sectionIds = new HashSet<>();
             Set<String> teacherIds = new HashSet<>();
@@ -118,10 +118,10 @@ public class AdminService {
             List<CourseParts> parts = new ArrayList<>();
             Map<String, Course.TeacherInfo> teacherInfoMap = new HashMap<>();
 
-            for (Section section : courseSections) {
-                sectionIds.add(section.getId());
+            for (Sections sections : courseSections) {
+                sectionIds.add(sections.getId());
 
-                for (Section.Class cls : section.getClasses()) {
+                for (Sections.Class cls : sections.getClasses()) {
                     if (cls.getCourse().equals(course.getId()) && cls.getTeacher() != null) {
                         teacherIds.add(cls.getTeacher());
 
@@ -132,11 +132,11 @@ public class AdminService {
                                 teacher.getName(),
                                 teacher.getAssignedEmail(),
                                 new ArrayList<>()
-                        )).getSections().add(section.getId());
+                        )).getSections().add(sections.getId());
 
                         CourseParts part = new CourseParts();
-                        part.setSectionId(section.getId());
-                        part.setSectionName(section.getName());
+                        part.setSectionId(sections.getId());
+                        part.setSectionName(sections.getName());
                         part.setTeacherId(cls.getTeacher());
                         part.setTeacherName(teacher.getName());
                         parts.add(part);
@@ -173,7 +173,7 @@ public class AdminService {
     @Transactional
     public void clearTeacherAndSectionsFromCourse() {
         List<Course> courses = coursesRepository.findAll();
-        List<Section> sections = sectionRepository.findAll();
+        List<Sections> sections = sectionRepository.findAll();
         List<Teacher> teachers = teachersRepository.findAll();
 
         List<PastRecords> pastRecords = new ArrayList<>();
@@ -193,7 +193,7 @@ public class AdminService {
             course.setTeachers(new ArrayList<>());
         }
 
-        for (Section section : sections) {
+        for (Sections section : sections) {
             section.setClasses(new ArrayList<>());
         }
 

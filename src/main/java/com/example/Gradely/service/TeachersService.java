@@ -262,8 +262,8 @@ public class TeachersService {
     }
 
     @Transactional
-    public Section assignCourseToTeacher(String sectionId, String teacherId, String courseId) {
-        Section section = sectionRepository.findById(sectionId)
+    public Sections assignCourseToTeacher(String sectionId, String teacherId, String courseId) {
+        Sections sections = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new RuntimeException("Section not found"));
 
         Teacher teacher = teachersRepository.findById(teacherId)
@@ -272,24 +272,24 @@ public class TeachersService {
         Course course = coursesRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        if (section.getClasses() == null) {
-            section.setClasses(new ArrayList<>());
+        if (sections.getClasses() == null) {
+            sections.setClasses(new ArrayList<>());
         }
 
-        boolean alreadyAssigned = section.getClasses().stream()
+        boolean alreadyAssigned = sections.getClasses().stream()
                 .anyMatch(cls -> courseId.equals(cls.getCourse()) && teacherId.equals(cls.getTeacher()));
 
         if (!alreadyAssigned) {
-            Section.Class sectionClass = new Section.Class();
+            Sections.Class sectionClass = new Sections.Class();
             sectionClass.setTeacher(teacherId);
             sectionClass.setCourse(courseId);
             sectionClass.setStudentAttendance(new ArrayList<>());
 
-            section.getClasses().add(sectionClass);
+            sections.getClasses().add(sectionClass);
         }
 
         Optional<Teacher.Section> teacherSectionOpt = teacher.getSections().stream()
-                .filter(sec -> sec.getName().equalsIgnoreCase(section.getName()))
+                .filter(sec -> sec.getName().equalsIgnoreCase(sections.getName()))
                 .findFirst();
 
         Teacher.CourseInfo courseInfo = new Teacher.CourseInfo(courseId, course.getCourseName(), 0.0, "", "", 0);
@@ -303,15 +303,15 @@ public class TeachersService {
             }
         } else {
             Teacher.Section newSection = new Teacher.Section();
-            newSection.setName(section.getName());
+            newSection.setName(sections.getName());
             newSection.setCourse(new ArrayList<>(List.of(courseInfo)));
             teacher.getSections().add(newSection);
         }
 
-        sectionRepository.save(section);
+        sectionRepository.save(sections);
         teachersRepository.save(teacher);
 
-        return section;
+        return sections;
     }
 
     @Transactional

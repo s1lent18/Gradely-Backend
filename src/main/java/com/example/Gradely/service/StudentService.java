@@ -3,6 +3,7 @@ package com.example.Gradely.service;
 import com.example.Gradely.database.model.*;
 import com.example.Gradely.database.repository.*;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,6 +49,7 @@ public class StudentService {
         public String dob;
     }
 
+    @Getter @Setter
     public static class CourseRegistration {
         public String section;
         public String teacher;
@@ -58,6 +60,7 @@ public class StudentService {
         public PreReqResult preReqResult;
     }
 
+    @Getter @Setter
     public static class PreReqResult {
         public String courseCode;
         public String courseName;
@@ -162,6 +165,48 @@ public class StudentService {
         public String teacherId;
     }
 
+    public static class StudentAllResultRequest {
+        public String Id;
+        public String courseId;
+    }
+
+    @Getter @Setter
+    public static class Details {
+        private String courseCode;
+        private String name;
+        private List<Student.Assignment> assignments;
+        private List<Student.Quiz> quizzes;
+        private String mid1Score;
+        private String mid1Total;
+        private String mid2Score;
+        private String mid2Total;
+        private String projectScore;
+        private String projectTotal;
+        private String classParticipationScore;
+        private String classParticipationTotal;
+        private String finalExamScore;
+        private String finalExamTotal;
+        private String studentId;
+
+        public Details(String studentId, Student.Course details) {
+            this.studentId = studentId;
+            this.courseCode = details.getCourseCode();
+            this.name = details.getName();
+            this.assignments = details.getAssignments();
+            this.quizzes = details.getQuizzes();
+            this.mid1Score = details.getMid1Score();
+            this.mid1Total = details.getMid1Total();
+            this.mid2Score = details.getMid2Score();
+            this.mid2Total = details.getMid2Total();
+            this.projectScore = details.getProjectScore();
+            this.projectTotal = details.getProjectTotal();
+            this.classParticipationScore = details.getClassParticipationScore();
+            this.classParticipationTotal = details.getClassParticipationTotal();
+            this.finalExamScore = details.getFinalExamScore();
+            this.finalExamTotal = details.getFinalExamTotal();
+        }
+    }
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -213,8 +258,8 @@ public class StudentService {
 
         Map<String, Course> courseMap = courseRepository.findAllById(courseIds)
                 .stream().collect(Collectors.toMap(Course::getId, c -> c));
-        Map<String, Section> sectionMap = sectionRepository.findAllById(sectionIds)
-                .stream().collect(Collectors.toMap(Section::getId, s -> s));
+        Map<String, Sections> sectionMap = sectionRepository.findAllById(sectionIds)
+                .stream().collect(Collectors.toMap(Sections::getId, s -> s));
         Map<String, Teacher> teacherMap = teachersRepository.findAllById(teacherIds)
                 .stream().collect(Collectors.toMap(Teacher::getId, t -> t));
 
@@ -237,7 +282,7 @@ public class StudentService {
 
         for (StudentRegisterRequest req : request) {
             Course course = courseMap.get(req.courseId);
-            Section section = sectionMap.get(req.sectionId);
+            Sections sections = sectionMap.get(req.sectionId);
             Teacher teacher = teacherMap.get(req.teacherId);
 
             boolean alreadyRegistered = student.getSemesters() != null &&
@@ -289,7 +334,7 @@ public class StudentService {
                 preReq.gpa = foundGpa != null ? foundGpa : 0.0;
             }
 
-            Section.Class matchingClass = getAClass(section, course, teacher);
+            Sections.Class matchingClass = getAClass(sections, course, teacher);
 
             if (matchingClass.getStudentAttendance() == null) {
                 matchingClass.setStudentAttendance(new ArrayList<>());
@@ -299,7 +344,7 @@ public class StudentService {
                     .anyMatch(sa -> sa.getStudent().equals(studentId));
 
             if (!alreadyExists) {
-                Section.StudentAttendance sa = new Section.StudentAttendance();
+                Sections.StudentAttendance sa = new Sections.StudentAttendance();
                 sa.setStudent(studentId);
                 sa.setAttendance(new ArrayList<>());
                 matchingClass.getStudentAttendance().add(sa);
@@ -310,7 +355,7 @@ public class StudentService {
             registrationForm.courseName = course.getCourseName();
             registrationForm.creditHours = course.getCreditHours();
             registrationForm.status = course.getStatus();
-            registrationForm.section = section.getId();
+            registrationForm.section = sections.getId();
             registrationForm.teacher = teacher.getId();
             registrationForm.preReqResult = preReq;
 
@@ -324,8 +369,8 @@ public class StudentService {
             for (Course.TeacherInfo teacherInfo : teacherInfos) {
                 if (Objects.equals(teacherInfo.getId(), teacher.getId())) {
                     teacherInfoExists = true;
-                    if (!teacherInfo.getSections().contains(section.getId())) {
-                        teacherInfo.getSections().add(section.getId());
+                    if (!teacherInfo.getSections().contains(sections.getId())) {
+                        teacherInfo.getSections().add(sections.getId());
                     }
                     break;
                 }
@@ -337,18 +382,18 @@ public class StudentService {
                 info.setName(teacher.getName());
                 info.setAssignedEmail(teacher.getAssignedEmail());
                 List<String> sectionList = new ArrayList<>();
-                sectionList.add(section.getId());
+                sectionList.add(sections.getId());
                 info.setSections(sectionList);
                 teacherInfos.add(info);
             }
 
-            sectionRepository.save(section);
+            sectionRepository.save(sections);
             courseRepository.save(course);
 
             // Add to student's semester
             Student.Courses newCourse = new Student.Courses();
             newCourse.setCourseId(course.getId());
-            newCourse.setSection(section.getId());
+            newCourse.setSection(sections.getId());
             newCourse.setGpa(0.0);
             newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName()));
 
@@ -366,17 +411,17 @@ public class StudentService {
         return registration;
     }
 
-    private Section.Class getAClass(Section section, Course course, Teacher teacher) {
-        if (section.getClasses() == null || section.getClasses().isEmpty()) {
-            throw new RuntimeException("No classes defined in section " + section.getId());
+    private Sections.Class getAClass(Sections sections, Course course, Teacher teacher) {
+        if (sections.getClasses() == null || sections.getClasses().isEmpty()) {
+            throw new RuntimeException("No classes defined in section " + sections.getId());
         }
 
-        return section.getClasses().stream()
+        return sections.getClasses().stream()
                 .filter(cls -> course.getId().equals(cls.getCourse()) &&
                         teacher.getId().equals(cls.getTeacher()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No matching class found in section "
-                        + section.getId() + " for course " + course.getCourseCode()));
+                        + sections.getId() + " for course " + course.getCourseCode()));
     }
 
     public StudentGetResponse getStudent(String assignedEmail) {
@@ -446,5 +491,37 @@ public class StudentService {
         Student student = studentsRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student Not Found"));
 
         return student.getSemesters();
+    }
+
+    public List<Details> getAllResults(StudentAllResultRequest request) {
+        List<String> studentIds = new ArrayList<>();
+
+        Sections sections = sectionRepository.findById(request.Id)
+                .orElseThrow(() -> new RuntimeException("Section Not Found"));
+
+        for (Sections.Class sec : sections.getClasses()) {
+            if (sec.getCourse().equals(request.courseId)) {
+                for (Sections.StudentAttendance sa : sec.getStudentAttendance()) {
+                    studentIds.add(sa.getStudent());
+                }
+            }
+        }
+
+        List<Student> students = studentsRepository.findAllById(studentIds);
+        List<Details> results = new ArrayList<>();
+
+        for (Student student : students) {
+            for (Student.Semester semester : student.getSemesters()) {
+                for (Student.Courses course : semester.getCourses()) {
+                    if (course.getCourseId().equals(request.courseId)) {
+                        if (course.getDetails() != null) {
+                            results.add(new Details(student.getId(), course.getDetails()));
+                        }
+                    }
+                }
+            }
+        }
+
+        return results;
     }
 }

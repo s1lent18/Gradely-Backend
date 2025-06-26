@@ -1,6 +1,6 @@
 package com.example.Gradely.service;
 
-import com.example.Gradely.database.model.Section;
+import com.example.Gradely.database.model.Sections;
 import com.example.Gradely.database.repository.SectionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +24,9 @@ public class SectionService {
     public static class SectionAddResponse {
         public String id;
         public String name;
-        public List<Section.Class> classes;
+        public List<Sections.Class> classes;
 
-        public SectionAddResponse(String id, String name, List<Section.Class> classes) {
+        public SectionAddResponse(String id, String name, List<Sections.Class> classes) {
             this.id = id;
             this.name = name;
             this.classes = classes;
@@ -36,16 +36,16 @@ public class SectionService {
     @Transactional
     public SectionAddResponse add(SectionAddRequest body) {
 
-        Section section = new Section();
-        section.setName(body.name);
-        section.setClasses(new ArrayList<>());
+        Sections sections = new Sections();
+        sections.setName(body.name);
+        sections.setClasses(new ArrayList<>());
 
-        sectionRepository.save(section);
+        sectionRepository.save(sections);
 
         return new SectionAddResponse(
-                section.getId(),
-                section.getName(),
-                section.getClasses()
+                sections.getId(),
+                sections.getName(),
+                sections.getClasses()
         );
     }
 }
