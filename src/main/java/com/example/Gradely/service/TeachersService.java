@@ -436,37 +436,62 @@ public class TeachersService {
         return marking;
     }
 
+    private static double safeParse(String value) {
+        if (value == null || value.trim().isEmpty()) return 0.0;
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            // Optionally log the error
+            return 0.0;
+        }
+    }
+
     private static double getTotal(Student.Course details) {
         double summ = 0.0;
 
-        for (Student.Assignment assignment : details.getAssignments()) {
-            summ += Double.parseDouble(assignment.getAssignmentTotal());
+        if (details.getAssignments() != null) {
+            for (Student.Assignment assignment : details.getAssignments()) {
+                summ += safeParse(assignment.getAssignmentTotal());
+            }
         }
-        for (Student.Quiz quiz : details.getQuizzes()) {
-            summ += Double.parseDouble(quiz.getQuizTotal());
+
+        if (details.getQuizzes() != null) {
+            for (Student.Quiz quiz : details.getQuizzes()) {
+                summ += safeParse(quiz.getQuizTotal());
+            }
         }
-        summ += Double.parseDouble(details.getMid1Total());
-        summ += Double.parseDouble(details.getClassParticipationTotal());
-        summ += Double.parseDouble(details.getProjectTotal());
-        summ += Double.parseDouble(details.getMid2Total());
-        summ += Double.parseDouble(details.getFinalExamTotal());
+
+        summ += safeParse(details.getMid1Total());
+        summ += safeParse(details.getClassParticipationTotal());
+        summ += safeParse(details.getProjectTotal());
+        summ += safeParse(details.getMid2Total());
+        summ += safeParse(details.getFinalExamTotal());
+
         return summ;
     }
+
 
     private static double getSum(Student.Course details) {
         double summ = 0.0;
 
-        for (Student.Assignment assignment : details.getAssignments()) {
-            summ += Double.parseDouble(assignment.getAssignmentScore());
+        if (details.getAssignments() != null) {
+            for (Student.Assignment assignment : details.getAssignments()) {
+                summ += safeParse(assignment.getAssignmentScore());
+            }
         }
-        for (Student.Quiz quiz : details.getQuizzes()) {
-            summ += Double.parseDouble(quiz.getQuizScore());
+
+        if (details.getQuizzes() != null) {
+            for (Student.Quiz quiz : details.getQuizzes()) {
+                summ += safeParse(quiz.getQuizScore());
+            }
         }
-        summ += Double.parseDouble(details.getMid1Score());
-        summ += Double.parseDouble(details.getClassParticipationScore());
-        summ += Double.parseDouble(details.getProjectScore());
-        summ += Double.parseDouble(details.getMid2Score());
-        summ += Double.parseDouble(details.getFinalExamScore());
+
+        summ += safeParse(details.getMid1Score());
+        summ += safeParse(details.getClassParticipationScore());
+        summ += safeParse(details.getProjectScore());
+        summ += safeParse(details.getMid2Score());
+        summ += safeParse(details.getFinalExamScore());
+
         return summ;
     }
 }
