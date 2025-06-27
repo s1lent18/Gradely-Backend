@@ -64,51 +64,78 @@ public class Student {
         private Double gpa;
         private String grade;
         private Course details;
+        private List<String> savePoints;
     }
 
     @Data
     public static class Course {
         private String courseCode;
         private String name;
+        private Integer creditCount;
         private List<Assignment> assignments;
         private List<Quiz> quizzes;
-        private String mid1Score;
-        private String mid1Total;
-        private String mid2Score;
-        private String mid2Total;
+        private Exam mid1;
+        private Exam mid2;
         private String projectScore;
         private String projectTotal;
         private String classParticipationScore;
         private String classParticipationTotal;
-        private String finalExamScore;
-        private String finalExamTotal;
+        private Exam finalExam;
         private List<Attendance> attendance;
 
-        public Course(String courseCode, String name) {
+        public Course(String courseCode, String name, Integer creditCount) {
             this.courseCode = courseCode;
             this.name = name;
+            this.creditCount = creditCount;
             this.assignments = new ArrayList<>();
             this.quizzes = new ArrayList<>();
-            this.mid1Score = "?";
-            this.mid1Total = "?";
-            this.mid2Score = "?";
-            this.mid2Total = "?";
+            this.mid1 = new Exam();
+            this.mid2 = new Exam();
             this.classParticipationScore = "?";
             this.classParticipationTotal = "?";
             this.projectScore = "?";
             this.projectTotal = "?";
-            this.finalExamScore = "?";
-            this.finalExamTotal = "?";
+            this.finalExam = new Exam();
             this.attendance = new ArrayList<>();
         }
     }
 
     @Data
+    public static class Exam {
+        private String examScore;
+        private String examTotal;
+        private String weightage;
+        private List<QuestionBreakDown> breakDowns;
+
+        public Exam() {
+            this.examScore = "?";
+            this.examTotal = "?";
+            this.weightage = "?";
+            this.breakDowns = new ArrayList<>();
+        }
+    }
+
+    @Data
+    public static class QuestionBreakDown {
+        public String questionScore;
+        public String questionTotal;
+        public String questionWeightage;
+
+        public QuestionBreakDown() {
+            this.questionScore = "?";
+            this.questionTotal = "?";
+            this.questionWeightage = "?";
+        }
+    }
+
+    @Data
     public static class Quiz {
+        private String weightage;
         private String quizScore;
         private String quizTotal;
 
         public Quiz() {
+            this.weightage = "?";
             this.quizScore = "?";
             this.quizTotal = "?";
         }
@@ -116,10 +143,12 @@ public class Student {
 
     @Data
     public static class Assignment {
+        private String weightage;
         private String assignmentScore;
         private String assignmentTotal;
 
         public Assignment() {
+            this.weightage = "?";
             this.assignmentScore = "?";
             this.assignmentTotal = "?";
         }

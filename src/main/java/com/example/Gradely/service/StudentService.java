@@ -67,13 +67,13 @@ public class StudentService {
         public Integer creditHours;
         public String status;
         public Double gpa;
+        public String grade;
     }
 
     @Getter
     public static class StudentLoginRequest {
         public String email;
         public String password;
-
     }
 
     public static class StudentGetResponse {
@@ -174,36 +174,32 @@ public class StudentService {
     public static class Details {
         private String courseCode;
         private String name;
+        private Integer creditCount;
         private List<Student.Assignment> assignments;
         private List<Student.Quiz> quizzes;
-        private String mid1Score;
-        private String mid1Total;
-        private String mid2Score;
-        private String mid2Total;
+        private Student.Exam mid1;
+        private Student.Exam mid2;
         private String projectScore;
         private String projectTotal;
         private String classParticipationScore;
         private String classParticipationTotal;
-        private String finalExamScore;
-        private String finalExamTotal;
+        private Student.Exam finalExam;
         private String studentId;
 
         public Details(String studentId, Student.Course details) {
             this.studentId = studentId;
             this.courseCode = details.getCourseCode();
+            this.creditCount = details.getCreditCount();
             this.name = details.getName();
             this.assignments = details.getAssignments();
             this.quizzes = details.getQuizzes();
-            this.mid1Score = details.getMid1Score();
-            this.mid1Total = details.getMid1Total();
-            this.mid2Score = details.getMid2Score();
-            this.mid2Total = details.getMid2Total();
+            this.mid1 = details.getMid1();
+            this.mid2 = details.getMid2();
+            this.finalExam = details.getFinalExam();
             this.projectScore = details.getProjectScore();
             this.projectTotal = details.getProjectTotal();
             this.classParticipationScore = details.getClassParticipationScore();
             this.classParticipationTotal = details.getClassParticipationTotal();
-            this.finalExamScore = details.getFinalExamScore();
-            this.finalExamTotal = details.getFinalExamTotal();
         }
     }
 
@@ -396,7 +392,7 @@ public class StudentService {
             newCourse.setSection(sections.getId());
             newCourse.setGpa(0.0);
             newCourse.setGrade("");
-            newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName()));
+            newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName(), course.getCreditHours()));
 
             semester.getCourses().add(newCourse);
             registration.add(registrationForm);

@@ -251,11 +251,23 @@ public class AdminService {
                         if (details != null) {
                             double score = 0;
 
-                            score += Integer.parseInt(details.getMid1Score());
-                            score += Integer.parseInt(details.getMid2Score());
-                            score += Integer.parseInt(details.getFinalExamScore());
-                            score += Integer.parseInt(details.getProjectScore());
-                            score += Integer.parseInt(details.getClassParticipationScore());
+                            score += ((
+                                    Double.parseDouble(details.getMid1().getExamScore()) /
+                                    Double.parseDouble(details.getMid1().getExamTotal())) *
+                                    Double.parseDouble(details.getMid1().getWeightage())
+                            );
+                            score += ((
+                                    Double.parseDouble(details.getMid2().getExamScore()) /
+                                            Double.parseDouble(details.getMid2().getExamTotal())) *
+                                    Double.parseDouble(details.getMid2().getWeightage())
+                            );
+                            score += ((
+                                    Double.parseDouble(details.getFinalExam().getExamScore()) /
+                                            Double.parseDouble(details.getFinalExam().getExamTotal())) *
+                                    Double.parseDouble(details.getFinalExam().getWeightage())
+                            );
+                            score += Double.parseDouble(details.getProjectScore());
+                            score += Double.parseDouble(details.getClassParticipationScore());
                             score += sumAssignments(details.getAssignments());
                             score += sumQuizzes(details.getQuizzes());
 

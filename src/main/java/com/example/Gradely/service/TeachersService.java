@@ -71,32 +71,27 @@ public class TeachersService {
     public static class TeacherMarking {
         public List<Student.Assignment> assignments;
         public List<Student.Quiz> quizzes;
-        public String mid1Score;
-        public String mid1Total;
-        public String mid2Score;
-        public String mid2Total;
+        public Student.Exam mid1;
+        public Student.Exam mid2;
         public String projectScore;
         public String projectTotal;
         public String classParticipationScore;
         public String classParticipationTotal;
-        public String finalExamScore;
-        public String finalExamTotal;
+        public Student.Exam finalExam;
 
-        public TeacherMarking(List<Student.Assignment> assignments, List<Student.Quiz> quizzes, String mid1Score, String mid1Total,
-                              String mid2Score, String mid2Total, String projectScore, String projectTotal, String classParticipationScore, String classParticipationTotal, String finalExamScore, String finalExamTotal
+        public TeacherMarking(List<Student.Assignment> assignments, List<Student.Quiz> quizzes,
+                              Student.Exam mid1, Student.Exam mid2, String projectScore, String projectTotal,
+                              String classParticipationScore, String classParticipationTotal, Student.Exam finalExam
         ) {
             this.assignments = assignments;
             this.quizzes = quizzes;
-            this.mid1Score = mid1Score;
-            this.mid1Total = mid1Total;
-            this.mid2Score = mid2Score;
-            this.mid2Total = mid2Total;
+            this.mid1 = mid1;
+            this.mid2 = mid2;
             this.projectScore = projectScore;
             this.projectTotal = projectTotal;
             this.classParticipationScore = classParticipationScore;
             this.classParticipationTotal = classParticipationTotal;
-            this.finalExamScore = finalExamScore;
-            this.finalExamTotal = finalExamTotal;
+            this.finalExam = finalExam;
         }
     }
 
@@ -378,22 +373,19 @@ public class TeachersService {
 
                     Student.Course details = courseEntry.getDetails();
                     if (details == null) {
-                        details = new Student.Course(course.getCourseCode(), course.getCourseName());
+                        details = new Student.Course(course.getCourseCode(), course.getCourseName(), course.getCreditHours());
                         courseEntry.setDetails(details);
                     }
 
                     details.setAssignments(mark.getAssignments());
                     details.setQuizzes(mark.getQuizzes());
-                    details.setMid1Score(mark.getMid1Score());
-                    details.setMid1Total(mark.getMid1Total());
-                    details.setMid2Score(mark.getMid2Score());
-                    details.setMid2Total(mark.getMid2Total());
+                    details.setMid1(mark.getMid1());
+                    details.setMid2(mark.getMid2());
+                    details.setFinalExam(mark.getFinalExam());
                     details.setProjectScore(mark.getProjectScore());
                     details.setProjectTotal(mark.getProjectTotal());
                     details.setClassParticipationScore(mark.getClassParticipationScore());
                     details.setClassParticipationTotal(mark.getClassParticipationTotal());
-                    details.setFinalExamScore(mark.getFinalExamScore());
-                    details.setFinalExamTotal(mark.getFinalExamTotal());
 
                     double total = getTotal(details);
                     double sum = getSum(details);
@@ -461,11 +453,11 @@ public class TeachersService {
             }
         }
 
-        summ += safeParse(details.getMid1Total());
+        summ += safeParse(details.getMid1().getWeightage());
         summ += safeParse(details.getClassParticipationTotal());
         summ += safeParse(details.getProjectTotal());
-        summ += safeParse(details.getMid2Total());
-        summ += safeParse(details.getFinalExamTotal());
+        summ += safeParse(details.getMid2().getWeightage());
+        summ += safeParse(details.getFinalExam().getWeightage());
 
         return summ;
     }
@@ -486,11 +478,26 @@ public class TeachersService {
             }
         }
 
-        summ += safeParse(details.getMid1Score());
+        summ += safeParse(
+                String.valueOf(((Double.parseDouble(details.getMid1().getExamScore()) /
+                Double.parseDouble(details.getMid1().getExamTotal())) *
+                Double.parseDouble(details.getMid1().getWeightage())))
+        );
+
+        summ += safeParse(
+                String.valueOf(((Double.parseDouble(details.getMid2().getExamScore()) /
+                Double.parseDouble(details.getMid2().getExamTotal())) *
+                Double.parseDouble(details.getMid2().getWeightage())))
+        );
+
+        summ += safeParse(
+                String.valueOf(((Double.parseDouble(details.getFinalExam().getExamScore()) /
+                Double.parseDouble(details.getFinalExam().getExamTotal())) *
+                Double.parseDouble(details.getFinalExam().getWeightage())))
+        );
+
         summ += safeParse(details.getClassParticipationScore());
         summ += safeParse(details.getProjectScore());
-        summ += safeParse(details.getMid2Score());
-        summ += safeParse(details.getFinalExamScore());
 
         return summ;
     }
