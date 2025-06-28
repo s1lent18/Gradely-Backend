@@ -159,10 +159,15 @@ public class StudentService {
         }
     }
 
-    public static class StudentRegisterRequest {
+    public static class StudentRegisterPart {
         public String courseId;
         public String sectionId;
         public String teacherId;
+    }
+
+    public static class StudentRegisterRequest {
+        public String semester;
+        public List<StudentRegisterPart> parts;
     }
 
     public static class StudentAllResultRequest {
@@ -244,13 +249,15 @@ public class StudentService {
     }
 
     @Transactional
-    public List<CourseRegistration> registerCourses(String studentId, List<StudentRegisterRequest> request) {
+    public List<CourseRegistration> registerCourses(String studentId, StudentRegisterRequest request) {
         Student student = studentsRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student Not Found"));
 
-        List<String> courseIds = request.stream().map(r -> r.courseId).collect(Collectors.toList());
-        List<String> sectionIds = request.stream().map(r -> r.sectionId).collect(Collectors.toList());
-        List<String> teacherIds = request.stream().map(r -> r.teacherId).collect(Collectors.toList());
+        List<StudentRegisterPart> parts = request.parts;
+
+        List<String> courseIds = parts.stream().map(p -> p.courseId).collect(Collectors.toList());
+        List<String> sectionIds = parts.stream().map(p -> p.sectionId).collect(Collectors.toList());
+        List<String> teacherIds = parts.stream().map(p -> p.teacherId).collect(Collectors.toList());
 
         Map<String, Course> courseMap = courseRepository.findAllById(courseIds)
                 .stream().collect(Collectors.toMap(Course::getId, c -> c));
@@ -266,32 +273,49 @@ public class StudentService {
         if (teacherMap.size() != teacherIds.size())
             throw new RuntimeException("Some teacher IDs are invalid");
 
-        int currentSemesterNumber = (student.getSemesters() != null && !student.getSemesters().isEmpty())
-                ? student.getSemesters().get(student.getSemesters().size() - 1).getNumber() + 1
-                : 1;
+        // Try to find existing semester by name
+        String semesterName = request.semester;
+        Student.Semester semester = null;
 
-        Student.Semester semester = new Student.Semester();
-        semester.setNumber(currentSemesterNumber);
-        semester.setCourses(new ArrayList<>());
+        if (student.getSemesters() != null) {
+            for (Student.Semester sem : student.getSemesters()) {
+                if (semesterName.equalsIgnoreCase(sem.getName())) {
+                    semester = sem;
+                    break;
+                }
+            }
+        }
+
+        boolean newSemesterCreated = false;
+
+        if (semester == null) {
+            semester = new Student.Semester();
+            semester.setName(semesterName);
+            semester.setCourses(new ArrayList<>());
+
+            int nextSemesterNumber = (student.getSemesters() != null && !student.getSemesters().isEmpty())
+                    ? student.getSemesters().get(student.getSemesters().size() - 1).getNumber() + 1
+                    : 1;
+
+            semester.setNumber(nextSemesterNumber);
+            newSemesterCreated = true;
+        }
 
         List<CourseRegistration> registration = new ArrayList<>();
 
-        for (StudentRegisterRequest req : request) {
+        for (StudentRegisterPart req : parts) {
             Course course = courseMap.get(req.courseId);
             Sections sections = sectionMap.get(req.sectionId);
             Teacher teacher = teacherMap.get(req.teacherId);
 
-            boolean alreadyRegistered = student.getSemesters() != null &&
-                    student.getSemesters().stream()
-                            .flatMap(s -> s.getCourses().stream())
-                            .anyMatch(c -> c.getCourseId().equals(req.courseId));
+            boolean alreadyRegistered = semester.getCourses().stream()
+                    .anyMatch(c -> c.getCourseId().equals(req.courseId));
 
             if (alreadyRegistered) {
-                throw new RuntimeException("Already registered for course: " + course.getCourseCode());
+                continue; // or update section/teacher if needed
             }
 
-            //List<Course.TeacherInfo> teacherInfos = course.getTeachers();
-
+            // Prerequisite validation
             PreReqResult preReq = null;
             if (course.getPreReqCode() != null) {
                 Course preReqCourse = courseRepository.findByCourseCode(course.getPreReqCode()).orElse(null);
@@ -330,8 +354,8 @@ public class StudentService {
                 preReq.gpa = foundGpa != null ? foundGpa : 0.0;
             }
 
+            // Class attendance setup
             Sections.Class matchingClass = getAClass(sections, course, teacher);
-
             if (matchingClass.getStudentAttendance() == null) {
                 matchingClass.setStudentAttendance(new ArrayList<>());
             }
@@ -346,6 +370,45 @@ public class StudentService {
                 matchingClass.getStudentAttendance().add(sa);
             }
 
+            // Teacher Info update
+            List<Course.TeacherInfo> teacherInfos = course.getTeachers();
+            if (teacherInfos == null) {
+                teacherInfos = new ArrayList<>();
+                course.setTeachers(teacherInfos);
+            }
+
+            Course.TeacherInfo existingTeacherInfo = teacherInfos.stream()
+                    .filter(ti -> Objects.equals(ti.getId(), teacher.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existingTeacherInfo == null) {
+                Course.TeacherInfo info = new Course.TeacherInfo();
+                info.setId(teacher.getId());
+                info.setName(teacher.getName());
+                info.setAssignedEmail(teacher.getAssignedEmail());
+                info.setSections(new ArrayList<>(List.of(sections.getId())));
+                teacherInfos.add(info);
+            } else if (!existingTeacherInfo.getSections().contains(sections.getId())) {
+                existingTeacherInfo.getSections().add(sections.getId());
+            }
+
+            sectionRepository.save(sections);
+            courseRepository.save(course);
+
+            // Register course in semester
+            Student.Courses newCourse = new Student.Courses();
+            newCourse.setCourseId(course.getId());
+            newCourse.setSection(sections.getId());
+            newCourse.setGpa(0.0);
+            newCourse.setGrade("");
+            newCourse.setAttendance(new ArrayList<>());
+            newCourse.setSavePoints(new ArrayList<>());
+            newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName(), course.getCreditHours()));
+
+            semester.getCourses().add(newCourse);
+
+            // Return for response
             CourseRegistration registrationForm = new CourseRegistration();
             registrationForm.courseCode = course.getCourseCode();
             registrationForm.courseName = course.getCourseName();
@@ -354,57 +417,18 @@ public class StudentService {
             registrationForm.section = sections.getId();
             registrationForm.teacher = teacher.getId();
             registrationForm.preReqResult = preReq;
-
-            List<Course.TeacherInfo> teacherInfos = course.getTeachers();
-            if (teacherInfos == null) {
-                teacherInfos = new ArrayList<>();
-                course.setTeachers(teacherInfos);
-            }
-
-            boolean teacherInfoExists = false;
-            for (Course.TeacherInfo teacherInfo : teacherInfos) {
-                if (Objects.equals(teacherInfo.getId(), teacher.getId())) {
-                    teacherInfoExists = true;
-                    if (!teacherInfo.getSections().contains(sections.getId())) {
-                        teacherInfo.getSections().add(sections.getId());
-                    }
-                    break;
-                }
-            }
-
-            if (!teacherInfoExists) {
-                Course.TeacherInfo info = new Course.TeacherInfo();
-                info.setId(teacher.getId());
-                info.setName(teacher.getName());
-                info.setAssignedEmail(teacher.getAssignedEmail());
-                List<String> sectionList = new ArrayList<>();
-                sectionList.add(sections.getId());
-                info.setSections(sectionList);
-                teacherInfos.add(info);
-            }
-
-            sectionRepository.save(sections);
-            courseRepository.save(course);
-
-            // Add to student's semester
-            Student.Courses newCourse = new Student.Courses();
-            newCourse.setCourseId(course.getId());
-            newCourse.setSection(sections.getId());
-            newCourse.setGpa(0.0);
-            newCourse.setGrade("");
-            newCourse.setDetails(new Student.Course(course.getCourseCode(), course.getCourseName(), course.getCreditHours()));
-
-            semester.getCourses().add(newCourse);
             registration.add(registrationForm);
         }
 
-        if (student.getSemesters() == null) {
-            student.setSemesters(new ArrayList<>());
+        // Only add the semester if new
+        if (newSemesterCreated) {
+            if (student.getSemesters() == null) {
+                student.setSemesters(new ArrayList<>());
+            }
+            student.getSemesters().add(semester);
         }
 
-        student.getSemesters().add(semester);
         studentsRepository.save(student);
-
         return registration;
     }
 

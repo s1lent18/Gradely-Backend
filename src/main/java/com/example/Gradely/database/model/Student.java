@@ -54,6 +54,9 @@ public class Student {
     @Data
     public static class Semester {
         private int number;
+        private String name;
+        private Integer creditsRegistered;
+        private Integer creditsEarned;
         private List<Courses> courses;
     }
 
@@ -64,6 +67,7 @@ public class Student {
         private Double gpa;
         private String grade;
         private Course details;
+        private List<Attendance> attendance;
         private List<String> savePoints;
     }
 
@@ -81,7 +85,6 @@ public class Student {
         private String classParticipationScore;
         private String classParticipationTotal;
         private Exam finalExam;
-        private List<Attendance> attendance;
 
         public Course(String courseCode, String name, Integer creditCount) {
             this.courseCode = courseCode;
@@ -96,7 +99,6 @@ public class Student {
             this.projectScore = "?";
             this.projectTotal = "?";
             this.finalExam = new Exam();
-            this.attendance = new ArrayList<>();
         }
     }
 

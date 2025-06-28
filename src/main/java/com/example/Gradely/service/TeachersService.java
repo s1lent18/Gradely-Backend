@@ -377,18 +377,49 @@ public class TeachersService {
                         courseEntry.setDetails(details);
                     }
 
-                    details.setAssignments(mark.getAssignments());
-                    details.setQuizzes(mark.getQuizzes());
-                    details.setMid1(mark.getMid1());
-                    details.setMid2(mark.getMid2());
-                    details.setFinalExam(mark.getFinalExam());
+                    if (mark.getAssignments() != null) {
+                        List<Student.Assignment> assignments = details.getAssignments();
+                        if (assignments == null) {
+                            assignments = new ArrayList<>();
+                        }
+                        assignments.addAll(mark.getAssignments());
+                        details.setAssignments(assignments);
+                    }
+
+                    if (mark.getQuizzes() != null) {
+                        List<Student.Quiz> quizzes = details.getQuizzes();
+                        if (quizzes == null) {
+                            quizzes = new ArrayList<>();
+                        }
+                        quizzes.addAll(mark.getQuizzes());
+                        details.setQuizzes(quizzes);
+                    }
+                    if (mark.getMid1() != null) {
+                        details.setMid1(mark.getMid1());
+                    }
+                    if (mark.getMid2() != null) {
+                        details.setMid2(mark.getMid2());
+                    }
+                    if (mark.getFinalExam() != null) {
+                        details.setFinalExam(mark.getFinalExam());
+                    }
                     details.setProjectScore(mark.getProjectScore());
                     details.setProjectTotal(mark.getProjectTotal());
                     details.setClassParticipationScore(mark.getClassParticipationScore());
                     details.setClassParticipationTotal(mark.getClassParticipationTotal());
 
                     double total = getTotal(details);
+                    System.out.println(total);
                     double sum = getSum(details);
+                    System.out.println(sum);
+
+                    List<String> temp = courseEntry.getSavePoints();
+                    if (temp == null) {
+                        temp = new ArrayList<>();
+                    }
+                    temp.add(String.valueOf(sum));
+                    courseEntry.setSavePoints(temp);
+
                     double gpa =
                             (sum >= 86) ? 4.00 :
                             (sum >= 82) ? 3.67 :
@@ -443,62 +474,73 @@ public class TeachersService {
 
         if (details.getAssignments() != null) {
             for (Student.Assignment assignment : details.getAssignments()) {
-                summ += safeParse(assignment.getAssignmentTotal());
+                summ += safeParse(assignment.getWeightage());
             }
         }
+
+        System.out.println(summ);
 
         if (details.getQuizzes() != null) {
             for (Student.Quiz quiz : details.getQuizzes()) {
-                summ += safeParse(quiz.getQuizTotal());
+                summ += safeParse(quiz.getWeightage());
             }
         }
 
+        System.out.println(summ);
+
         summ += safeParse(details.getMid1().getWeightage());
+        System.out.println(summ);
         summ += safeParse(details.getClassParticipationTotal());
+        System.out.println(summ);
         summ += safeParse(details.getProjectTotal());
+        System.out.println(summ);
         summ += safeParse(details.getMid2().getWeightage());
+        System.out.println(summ);
         summ += safeParse(details.getFinalExam().getWeightage());
+        System.out.println(summ);
 
         return summ;
     }
-
 
     private static double getSum(Student.Course details) {
         double summ = 0.0;
 
         if (details.getAssignments() != null) {
             for (Student.Assignment assignment : details.getAssignments()) {
-                summ += safeParse(assignment.getAssignmentScore());
+                summ += safeParse(assignment.getWeightage());
             }
         }
 
         if (details.getQuizzes() != null) {
             for (Student.Quiz quiz : details.getQuizzes()) {
-                summ += safeParse(quiz.getQuizScore());
+                summ += safeParse(quiz.getWeightage());
             }
         }
 
-        summ += safeParse(
-                String.valueOf(((Double.parseDouble(details.getMid1().getExamScore()) /
-                Double.parseDouble(details.getMid1().getExamTotal())) *
-                Double.parseDouble(details.getMid1().getWeightage())))
-        );
-
-        summ += safeParse(
-                String.valueOf(((Double.parseDouble(details.getMid2().getExamScore()) /
-                Double.parseDouble(details.getMid2().getExamTotal())) *
-                Double.parseDouble(details.getMid2().getWeightage())))
-        );
-
-        summ += safeParse(
-                String.valueOf(((Double.parseDouble(details.getFinalExam().getExamScore()) /
-                Double.parseDouble(details.getFinalExam().getExamTotal())) *
-                Double.parseDouble(details.getFinalExam().getWeightage())))
-        );
+        summ += calculateExamScore(details.getMid1());
+        summ += calculateExamScore(details.getMid2());
+        summ += calculateExamScore(details.getFinalExam());
 
         summ += safeParse(details.getClassParticipationScore());
         summ += safeParse(details.getProjectScore());
 
         return summ;
     }
+
+    private static double calculateExamScore(Student.Exam exam) {
+        if (exam == null) return 0.0;
+
+        try {
+            double score = Double.parseDouble(exam.getExamScore());
+            double total = Double.parseDouble(exam.getExamTotal());
+            double weight = Double.parseDouble(exam.getWeightage());
+
+            if (total == 0) return 0.0; // Avoid division by zero
+
+            return (score / total) * weight;
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
 }

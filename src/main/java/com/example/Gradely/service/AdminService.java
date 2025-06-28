@@ -76,7 +76,6 @@ public class AdminService {
         private Double highest;
         private Double lowest;
         private String avgGrade;
-
     }
 
     @Transactional

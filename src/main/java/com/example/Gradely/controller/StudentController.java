@@ -40,10 +40,6 @@ public class StudentController {
         this.jwtUtil = jwtUtil;
     }
 
-    public static class StudentRegisterCourses {
-        public List<StudentService.StudentRegisterRequest> requests;
-    }
-
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<StudentService.StudentResponse> addStudent(@RequestBody StudentService.StudentRequest request) {
@@ -78,8 +74,8 @@ public class StudentController {
 
     @PostMapping("/{studentId}/register")
     @PreAuthorize("hasAuthority('STUDENT')")
-    public ResponseEntity<List<StudentService.CourseRegistration>> registerCourse(@PathVariable String studentId, @RequestBody StudentRegisterCourses request) {
-        List<StudentService.CourseRegistration> response = studentService.registerCourses(studentId, request.requests);
+    public ResponseEntity<List<StudentService.CourseRegistration>> registerCourse(@PathVariable String studentId, @RequestBody StudentService.StudentRegisterRequest request) {
+        List<StudentService.CourseRegistration> response = studentService.registerCourses(studentId, request);
         return ResponseEntity.ok(response);
     }
 
