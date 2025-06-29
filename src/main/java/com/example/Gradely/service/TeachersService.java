@@ -403,10 +403,14 @@ public class TeachersService {
                     if (mark.getFinalExam() != null) {
                         details.setFinalExam(mark.getFinalExam());
                     }
-                    details.setProjectScore(mark.getProjectScore());
-                    details.setProjectTotal(mark.getProjectTotal());
-                    details.setClassParticipationScore(mark.getClassParticipationScore());
-                    details.setClassParticipationTotal(mark.getClassParticipationTotal());
+                    if (mark.getProjectScore() != null && mark.getProjectTotal() != null) {
+                        details.setProjectScore(mark.getProjectScore());
+                        details.setProjectTotal(mark.getProjectTotal());
+                    }
+                    if (mark.getClassParticipationScore() != null && mark.getClassParticipationTotal() != null) {
+                        details.setClassParticipationScore(mark.getClassParticipationScore());
+                        details.setClassParticipationTotal(mark.getClassParticipationTotal());
+                    }
 
                     double total = getTotal(details);
                     System.out.println(total);
