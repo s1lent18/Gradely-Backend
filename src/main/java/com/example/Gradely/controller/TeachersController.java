@@ -103,4 +103,17 @@ public class TeachersController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{teacherId}/markAttendance")
+    public ResponseEntity<?> markAttendance(
+            @PathVariable String teacherId,
+            @RequestBody TeachersService.TeacherAttendanceRequest body
+    ) {
+        try {
+            TeachersService.TeacherAttendanceRequest result = teachersService.markAttendance(teacherId, body);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
 }

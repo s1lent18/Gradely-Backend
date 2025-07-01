@@ -181,6 +181,17 @@ public class TeachersService {
         }
     }
 
+    public static class TeacherAttendanceRequest {
+        public String sectionName;
+        public String courseId;
+        public List<TeacherAttendancePart> attendanceParts;
+    }
+
+    public static class TeacherAttendancePart {
+        public String studentId;
+        public List<Student.Attendance> attendances;
+    }
+
     public TeachersGetResponse getTeacher(String assignedEmail) {
         Teacher teacher = teachersRepository.findByAssignedEmail(assignedEmail).orElseThrow(() -> new RuntimeException("Teacher Not Found"));
         Department dept = departmentsRepository.findById(teacher.getDepartmentId()).orElseThrow(() -> new RuntimeException("Department not found"));
@@ -547,4 +558,74 @@ public class TeachersService {
         }
     }
 
+    @Transactional
+    public TeacherAttendanceRequest markAttendance(String teacherId, TeacherAttendanceRequest body) {
+        Sections section = sectionRepository.findByName(body.sectionName)
+                .orElseThrow(() -> new RuntimeException("Section Not Found"));
+
+        List<Sections.Class> classes = section.getClasses();
+        Map<String, Student> studentMap = new HashMap<>();
+
+        for (Sections.Class cls : classes) {
+            if (Objects.equals(teacherId, cls.getTeacher()) && Objects.equals(body.courseId, cls.getCourse())) {
+                List<Sections.StudentAttendance> studentAttendances = cls.getStudentAttendance();
+
+                for (TeacherAttendancePart part : body.attendanceParts) {
+                    String studentId = part.studentId;
+                    List<Student.Attendance> newAttendance = part.attendances;
+
+
+                    for (Sections.StudentAttendance existing : studentAttendances) {
+                        if (existing.getStudent().equals(studentId)) {
+                            List<Sections.AttendanceEntry> attendanceEntries = existing.getAttendance();
+                            if (attendanceEntries == null) {
+                                attendanceEntries = new ArrayList<>();
+                                existing.setAttendance(attendanceEntries);
+                            }
+
+                            for (Student.Attendance att : newAttendance) {
+                                Sections.AttendanceEntry entry = new Sections.AttendanceEntry();
+                                entry.setDate(att.getDate());
+                                entry.setStatus(att.getStatus());
+                                attendanceEntries.add(entry);
+                            }
+                            break;
+                        }
+                    }
+
+                    Student student = studentMap.computeIfAbsent(studentId,
+                            id -> studentsRepository.findById(id)
+                                    .orElseThrow(() -> new RuntimeException("Student not found: " + id)));
+
+                    List<Student.Semester> semesters = student.getSemesters();
+                    if (semesters != null) {
+
+                        for (int i = semesters.size() - 1; i >= 0; i--) {
+                            Student.Semester semester = semesters.get(i);
+                            for (Student.Courses course : semester.getCourses()) {
+                                if (course.getCourseId().equals(body.courseId)) {
+
+                                    List<Student.Attendance> studentAttendance = course.getAttendance();
+                                    if (studentAttendance == null) {
+                                        studentAttendance = new ArrayList<>();
+                                        course.setAttendance(studentAttendance);
+                                    }
+
+                                    studentAttendance.addAll(newAttendance);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                break;
+            }
+        }
+
+        sectionRepository.save(section);
+        studentsRepository.saveAll(studentMap.values());
+
+        return body;
+    }
 }

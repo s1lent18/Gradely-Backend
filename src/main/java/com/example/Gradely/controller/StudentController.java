@@ -115,4 +115,13 @@ public class StudentController {
         response.put("allResults", list);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{studentId}/getAttendance")
+    public ResponseEntity<?> getAttendance(@PathVariable String studentId) {
+
+        Map<String, List<StudentService.StudentAttendanceRequest>> response = new HashMap<>();
+        List<StudentService.StudentAttendanceRequest> list = studentService.getAttendance(studentId);
+        response.put("attendance", list);
+        return ResponseEntity.ok(response);
+    }
 }

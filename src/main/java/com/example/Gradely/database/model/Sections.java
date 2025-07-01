@@ -41,7 +41,7 @@ public class Sections {
     @Data
     public static class AttendanceEntry {
         private String date;
-        private List<Map<String, String>> status;
+        private String status;
     }
 
     public Sections() {}

@@ -17,10 +17,9 @@ public class RedisCacheConfig {
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig();
 
-        Duration ttl = Duration.ofDays(90);
-
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        cacheConfigurations.put("courseRegistration", defaultConfig.entryTtl(ttl));
+        cacheConfigurations.put("courseRegistration", defaultConfig.entryTtl(Duration.ofDays(90)));
+        cacheConfigurations.put("studentAttendance", defaultConfig.entryTtl(Duration.ofMinutes(15)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)

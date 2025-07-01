@@ -1,6 +1,7 @@
 package com.example.Gradely.database.model;
 
 
+import java.io.Serializable;
 import java.security.SecureRandom;
 
 import org.springframework.data.annotation.Id;
@@ -190,7 +191,7 @@ public class Student {
     }
 
     @Data
-    public static class Attendance {
+    public static class Attendance implements Serializable {
         private String date;
         private String status;
     }

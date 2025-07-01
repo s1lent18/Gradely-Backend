@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -168,6 +169,36 @@ public class StudentService {
     public static class StudentRegisterRequest {
         public String semester;
         public List<StudentRegisterPart> parts;
+    }
+
+    public static class StudentAttendanceRequest implements Serializable {
+        public Integer number;
+        public String name;
+        public List<StudentAttendancePart> courseAttendances;
+
+        public StudentAttendanceRequest(Integer number, String name, List<StudentAttendancePart> courseAttendances) {
+            this.number = number;
+            this.name = name;
+            this.courseAttendances = courseAttendances;
+        }
+    }
+
+    public static class StudentAttendancePart implements Serializable {
+        public String courseId;
+        public String courseCode;
+        public String courseName;
+        public String sectionId;
+        public String sectionName;
+        public List<Student.Attendance> attendances;
+
+        public StudentAttendancePart(String courseId, String courseCode, String courseName, String sectionId, String sectionName, List<Student.Attendance> attendances) {
+            this.courseId = courseId;
+            this.courseCode = courseCode;
+            this.courseName = courseName;
+            this.sectionId = sectionId;
+            this.sectionName = sectionName;
+            this.attendances = attendances;
+        }
     }
 
     public static class StudentAllResultRequest {
@@ -469,6 +500,47 @@ public class StudentService {
                 student.getCgpa(),
                 student.getSemesters()
         );
+    }
+
+    @Cacheable(value = "studentAttendance", key = "#studentId", unless = "#result == null")
+    public List<StudentAttendanceRequest> getAttendance(String studentId) {
+        Student student = studentsRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        List<StudentAttendanceRequest> response = new ArrayList<>();
+
+        List<Student.Semester> semesters = student.getSemesters();
+        if (semesters == null || semesters.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<StudentAttendancePart> parts = new ArrayList<>();
+
+        for (int i = semesters.size() - 1; i >= 0; i--) {
+            Student.Semester semester = semesters.get(i);
+            for (Student.Courses course : semester.getCourses()) {
+                if (course.getAttendance() != null) {
+                    Sections section = sectionRepository.findById(course.getSection()).orElseThrow(() -> new RuntimeException("Section Not Found"));
+                    StudentAttendancePart part = new StudentAttendancePart(
+                            course.getCourseId(),
+                            course.getDetails().getCourseCode(),
+                            course.getDetails().getName(),
+                            course.getSection(),
+                            section.getName(),
+                            course.getAttendance()
+                    );
+                    parts.add(part);
+
+
+                }
+            }
+            response.add(new StudentAttendanceRequest(
+                    semester.getNumber(),
+                    semester.getName(),
+                    parts
+            ));
+        }
+        return response;
     }
 
     @Cacheable(value = "courseRegistration", key = "#studentId", unless = "#result == null")
